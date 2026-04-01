@@ -1,17 +1,42 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+export interface Company {
+  id: string;
+  name: string;
+  code: string;
+  industry: string;
+  location: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: "student" | "employee" | "admin";
+  companyCode?: string;
+  companyName?: string;
+  phone?: string;
+  department?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => boolean;
-  register: (name: string, email: string, password: string, role: "student" | "employee") => boolean;
+  register: (data: RegisterData) => boolean;
   logout: () => void;
+  getCompanies: () => Company[];
+  addCompany: (company: Omit<Company, "id">) => void;
+  deleteCompany: (id: string) => void;
+}
+
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  role: "student" | "employee";
+  phone?: string;
+  companyCode?: string;
+  department?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,6 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem("mm_user");
     if (stored) setUser(JSON.parse(stored));
   }, []);
+
+  const getCompanies = (): Company[] => {
+    return JSON.parse(localStorage.getItem("mm_companies") || "[]");
+  };
+
+  const addCompany = (company: Omit<Company, "id">) => {
+    const companies = getCompanies();
+    companies.push({ ...company, id: crypto.randomUUID() });
+    localStorage.setItem("mm_companies", JSON.stringify(companies));
+  };
+
+  const deleteCompany = (id: string) => {
+    const companies = getCompanies().filter(c => c.id !== id);
+    localStorage.setItem("mm_companies", JSON.stringify(companies));
+  };
 
   const login = (email: string, _password: string): boolean => {
     const users: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
@@ -41,10 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const register = (name: string, email: string, _password: string, role: "student" | "employee"): boolean => {
+  const register = (data: RegisterData): boolean => {
     const users: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
-    if (users.find(u => u.email === email)) return false;
-    const newUser: User = { id: crypto.randomUUID(), name, email, role };
+    if (users.find(u => u.email === data.email)) return false;
+
+    let companyName: string | undefined;
+    if (data.role === "employee" && data.companyCode) {
+      const companies = getCompanies();
+      const company = companies.find(c => c.code === data.companyCode);
+      if (!company) return false;
+      companyName = company.name;
+    }
+
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      phone: data.phone,
+      companyCode: data.companyCode,
+      companyName,
+      department: data.department,
+    };
     users.push(newUser);
     localStorage.setItem("mm_users", JSON.stringify(users));
     setUser(newUser);
@@ -58,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, getCompanies, addCompany, deleteCompany }}>
       {children}
     </AuthContext.Provider>
   );
