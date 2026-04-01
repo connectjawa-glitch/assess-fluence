@@ -133,7 +133,7 @@ export function calculateQuotients(responses: Responses): QuotientResult {
     const max = calcSubcategoryMax("Quotient", t);
     result[t] = Math.round((score / max) * 100);
   });
-  return result as QuotientResult;
+  return result as unknown as QuotientResult;
 }
 
 export function calculateCareer(responses: Responses): CareerResult {
