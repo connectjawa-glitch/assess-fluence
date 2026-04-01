@@ -98,7 +98,7 @@ export function calculateMBTI(responses: Responses): MBTIResult {
     scores[s] = calcSubcategoryScore(responses, "MBTI", s);
   });
   const type = pairs.map(([a, b]) => scores[a] >= scores[b] ? a : b).join("");
-  return { type, scores };
+  return { type, scores: scores as MBTIResult["scores"] };
 }
 
 export function calculateIntelligence(responses: Responses): IntelligenceResult {
