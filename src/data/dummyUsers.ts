@@ -37,14 +37,14 @@ const defaultCompanies: Omit<Company, "id">[] = [
 ];
 
 const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }[] = [
-  { user: { name: "John Smith", email: "john@example.com", role: "student" }, profile: { D: 2, I: 3, S: 5, C: 3, E: 4, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 4, P: 2 } },
-  { user: { name: "Sarah Johnson", email: "sarah@example.com", role: "student" }, profile: { D: 4, I: 5, S: 2, C: 2, E: 5, Iv: 1, Se: 2, N: 5, T: 2, F: 4, J: 2, P: 5 } },
+  { user: { name: "John Smith", email: "john@example.com", role: "student", school: "Springfield High School" }, profile: { D: 2, I: 3, S: 5, C: 3, E: 4, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 4, P: 2 } },
+  { user: { name: "Sarah Johnson", email: "sarah@example.com", role: "student", school: "MIT" }, profile: { D: 4, I: 5, S: 2, C: 2, E: 5, Iv: 1, Se: 2, N: 5, T: 2, F: 4, J: 2, P: 5 } },
   { user: { name: "Michael Chen", email: "michael@example.com", role: "employee", companyCode: "TECH001", companyName: "TechCorp Solutions", department: "Engineering" }, profile: { D: 5, I: 3, S: 2, C: 4, E: 3, Iv: 4, Se: 4, N: 3, T: 5, F: 2, J: 5, P: 1 } },
-  { user: { name: "Emily Davis", email: "emily@example.com", role: "student" }, profile: { D: 2, I: 4, S: 4, C: 3, E: 4, Iv: 3, Se: 2, N: 5, T: 3, F: 4, J: 3, P: 4 } },
+  { user: { name: "Emily Davis", email: "emily@example.com", role: "student", school: "Stanford University" }, profile: { D: 2, I: 4, S: 4, C: 3, E: 4, Iv: 3, Se: 2, N: 5, T: 3, F: 4, J: 3, P: 4 } },
   { user: { name: "David Wilson", email: "david@example.com", role: "employee", companyCode: "GFL002", companyName: "Global Finance Ltd", department: "Analytics" }, profile: { D: 3, I: 2, S: 3, C: 5, E: 2, Iv: 5, Se: 5, N: 2, T: 5, F: 1, J: 5, P: 1 } },
-  { user: { name: "Lisa Anderson", email: "lisa@example.com", role: "student" }, profile: { D: 3, I: 5, S: 3, C: 2, E: 5, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 2, P: 5 } },
+  { user: { name: "Lisa Anderson", email: "lisa@example.com", role: "student", school: "Harvard University" }, profile: { D: 3, I: 5, S: 3, C: 2, E: 5, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 2, P: 5 } },
   { user: { name: "James Brown", email: "james@example.com", role: "employee", companyCode: "TECH001", companyName: "TechCorp Solutions", department: "Product" }, profile: { D: 4, I: 4, S: 2, C: 3, E: 4, Iv: 3, Se: 3, N: 4, T: 4, F: 3, J: 4, P: 3 } },
-  { user: { name: "Maria Garcia", email: "maria@example.com", role: "student" }, profile: { D: 2, I: 3, S: 5, C: 4, E: 2, Iv: 5, Se: 4, N: 3, T: 3, F: 4, J: 4, P: 3 } },
+  { user: { name: "Maria Garcia", email: "maria@example.com", role: "student", school: "Oxford Academy" }, profile: { D: 2, I: 3, S: 5, C: 4, E: 2, Iv: 5, Se: 4, N: 3, T: 3, F: 4, J: 4, P: 3 } },
   { user: { name: "Robert Taylor", email: "robert@example.com", role: "employee", companyCode: "HF003", companyName: "HealthFirst Inc", department: "Research" }, profile: { D: 5, I: 4, S: 1, C: 2, E: 5, Iv: 2, Se: 2, N: 5, T: 3, F: 4, J: 2, P: 5 } },
   { user: { name: "Jennifer Lee", email: "jennifer@example.com", role: "employee", companyCode: "GFL002", companyName: "Global Finance Ltd", department: "Risk" }, profile: { D: 3, I: 3, S: 4, C: 4, E: 3, Iv: 4, Se: 4, N: 3, T: 4, F: 3, J: 4, P: 3 } },
 ];
