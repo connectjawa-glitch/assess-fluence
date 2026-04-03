@@ -38,6 +38,7 @@ export interface RegisterData {
   phone?: string;
   companyCode?: string;
   department?: string;
+  school?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
