@@ -51,6 +51,7 @@ export default function DashboardPage() {
               <div><p className="text-muted-foreground text-xs">Email</p><p className="font-medium">{user.email}</p></div>
               <div><p className="text-muted-foreground text-xs">Role</p><p className="font-medium capitalize">{user.role}</p></div>
               {user.companyName && <div><p className="text-muted-foreground text-xs">Company</p><p className="font-medium">{user.companyName}</p></div>}
+              {user.school && <div><p className="text-muted-foreground text-xs">School</p><p className="font-medium">{user.school}</p></div>}
             </div>
           </CardContent>
         </Card>
