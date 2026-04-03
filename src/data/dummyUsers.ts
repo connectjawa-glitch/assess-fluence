@@ -73,5 +73,5 @@ export function initializeDummyData() {
   // Remove old dummy users
   const nonDummy = existing.filter(e => !dummyProfiles.some(dp => dp.user.email === e.email));
   localStorage.setItem("mm_users", JSON.stringify([...nonDummy, ...users]));
-  localStorage.setItem("mm_dummy_v2", "true");
+  localStorage.setItem("mm_dummy_v3", "true");
 }
