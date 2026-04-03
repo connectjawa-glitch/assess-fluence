@@ -17,6 +17,7 @@ export interface User {
   companyName?: string;
   phone?: string;
   department?: string;
+  school?: string;
 }
 
 interface AuthContextType {
