@@ -104,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       companyCode: data.companyCode,
       companyName,
       department: data.department,
+      school: data.school,
     };
     users.push(newUser);
     localStorage.setItem("mm_users", JSON.stringify(users));

@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area
 } from "recharts";
 import { generateDeepReport } from "@/lib/pdfReport";
-import { Download, Printer, ArrowLeft, FileText, Bird, Shield, Eye as EyeIcon, Feather } from "lucide-react";
+import { Download, Printer, ArrowLeft, FileText, Bird, Eye as EyeIcon, Feather } from "lucide-react";
 import { mbtiInterpretations, discInterpretations } from "@/lib/interpretations";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
