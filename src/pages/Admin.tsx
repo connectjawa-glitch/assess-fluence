@@ -442,17 +442,17 @@ export default function AdminPage() {
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead>
+                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Name</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Email</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Role</th>
-                        <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Company</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Company/School</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Status</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">MBTI</th>
                         <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">Actions</th>
                       </tr>
-                    </thead>
+                     </thead>
                     <tbody>
                       {filteredUsers.map(u => {
                         const completed = !!localStorage.getItem(`mm_completed_${u.id}`);
