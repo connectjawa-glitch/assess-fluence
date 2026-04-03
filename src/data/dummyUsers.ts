@@ -50,7 +50,7 @@ const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }
 ];
 
 export function initializeDummyData() {
-  if (localStorage.getItem("mm_dummy_v2")) return;
+  if (localStorage.getItem("mm_dummy_v3")) return;
 
   // Clear old data
   localStorage.removeItem("mm_dummy_initialized");
