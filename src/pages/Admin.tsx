@@ -442,17 +442,17 @@ export default function AdminPage() {
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead>
+                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Name</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Email</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Role</th>
-                        <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Company</th>
+                        <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Company/School</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Status</th>
                         <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">MBTI</th>
                         <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">Actions</th>
                       </tr>
-                    </thead>
+                     </thead>
                     <tbody>
                       {filteredUsers.map(u => {
                         const completed = !!localStorage.getItem(`mm_completed_${u.id}`);
@@ -471,7 +471,7 @@ export default function AdminPage() {
                                 {u.role}
                               </span>
                             </td>
-                            <td className="py-2.5 px-2 text-xs">{u.companyName || "—"}</td>
+                            <td className="py-2.5 px-2 text-xs">{u.companyName || u.school || "—"}</td>
                             <td className="py-2.5 px-2">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${completed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                                 {completed ? "Done" : "Pending"}

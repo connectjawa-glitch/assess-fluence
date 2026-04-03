@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, GraduationCap, Briefcase } from "lucide-react";
+import { Building2, GraduationCap, Briefcase, School } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"student" | "employee">("student");
   const [companyCode, setCompanyCode] = useState("");
   const [department, setDepartment] = useState("");
+  const [school, setSchool] = useState("");
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const { register, getCompanies } = useAuth();
@@ -34,10 +35,16 @@ export default function RegisterPage() {
       return;
     }
 
+    if (role === "student" && !school) {
+      setError("Please enter your school/college name.");
+      return;
+    }
+
     const success = register({
       name, email, password, role, phone,
       companyCode: role === "employee" ? companyCode : undefined,
       department: role === "employee" ? department : undefined,
+      school: role === "student" ? school : undefined,
     });
 
     if (success) {
@@ -51,6 +58,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg shadow-elevated animate-fade-in">
         <CardHeader className="text-center pb-2">
+          <div className="text-4xl mb-2">🧠</div>
           <CardTitle className="text-2xl font-display text-gradient">Create Account</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">Mind Mapping & Assessment Portal</p>
         </CardHeader>
@@ -68,24 +76,24 @@ export default function RegisterPage() {
                       : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
-                  <GraduationCap className={`w-5 h-5 ${role === "student" ? "text-primary" : "text-muted-foreground"}`} />
+                  <GraduationCap className={`w-6 h-6 ${role === "student" ? "text-primary" : "text-muted-foreground"}`} />
                   <div className="text-left">
-                    <p className={`font-medium text-sm ${role === "student" ? "text-primary" : "text-foreground"}`}>Student</p>
+                    <p className={`font-medium text-sm ${role === "student" ? "text-primary" : "text-foreground"}`}>🎓 Student</p>
                     <p className="text-xs text-muted-foreground">Learning assessment</p>
                   </div>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRole("employee")}
+                  onClick={() => { setRole("employee"); setSchool(""); }}
                   className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                     role === "employee"
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
-                  <Briefcase className={`w-5 h-5 ${role === "employee" ? "text-primary" : "text-muted-foreground"}`} />
+                  <Briefcase className={`w-6 h-6 ${role === "employee" ? "text-primary" : "text-muted-foreground"}`} />
                   <div className="text-left">
-                    <p className={`font-medium text-sm ${role === "employee" ? "text-primary" : "text-foreground"}`}>Employee</p>
+                    <p className={`font-medium text-sm ${role === "employee" ? "text-primary" : "text-foreground"}`}>💼 Employee</p>
                     <p className="text-xs text-muted-foreground">Performance system</p>
                   </div>
                 </button>
@@ -113,11 +121,25 @@ export default function RegisterPage() {
               <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create password" required />
             </div>
 
+            {role === "student" && (
+              <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <School className="w-4 h-4 text-primary" />
+                  🏫 School / College Details
+                </div>
+                <div className="space-y-2">
+                  <Label>School / College Name <span className="text-destructive">*</span></Label>
+                  <Input value={school} onChange={e => setSchool(e.target.value)} placeholder="e.g., Springfield High School, MIT" required />
+                  <p className="text-xs text-muted-foreground">Enter your current school or college name</p>
+                </div>
+              </div>
+            )}
+
             {role === "employee" && (
               <div className="space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Building2 className="w-4 h-4 text-primary" />
-                  Company Details
+                  🏢 Company Details
                 </div>
                 <div className="space-y-2">
                   <Label>Company Code <span className="text-destructive">*</span></Label>
@@ -143,8 +165,10 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground">Create Account</Button>
+            {error && <p className="text-destructive text-sm text-center">{error}</p>}
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground h-11 text-sm font-semibold">
+              🚀 Create Account
+            </Button>
           </form>
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground">

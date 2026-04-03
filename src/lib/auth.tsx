@@ -17,6 +17,7 @@ export interface User {
   companyName?: string;
   phone?: string;
   department?: string;
+  school?: string;
 }
 
 interface AuthContextType {
@@ -37,6 +38,7 @@ export interface RegisterData {
   phone?: string;
   companyCode?: string;
   department?: string;
+  school?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -102,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       companyCode: data.companyCode,
       companyName,
       department: data.department,
+      school: data.school,
     };
     users.push(newUser);
     localStorage.setItem("mm_users", JSON.stringify(users));
