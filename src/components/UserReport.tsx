@@ -6,10 +6,18 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar,
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area
 } from "recharts";
-import jsPDF from "jspdf";
-import { Download, Printer, ArrowLeft } from "lucide-react";
+import { generateDeepReport } from "@/lib/pdfReport";
+import { Download, Printer, ArrowLeft, FileText, Bird, Shield, Eye as EyeIcon, Feather } from "lucide-react";
+import { mbtiInterpretations, discInterpretations } from "@/lib/interpretations";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
+
+const birdIcons: Record<string, { icon: typeof Bird; color: string; label: string }> = {
+  Eagle: { icon: Bird, color: "text-red-500", label: "🦅 Eagle" },
+  Parrot: { icon: Feather, color: "text-green-500", label: "🦜 Parrot" },
+  Dove: { icon: Bird, color: "text-blue-400", label: "🕊️ Dove" },
+  Owl: { icon: EyeIcon, color: "text-amber-500", label: "🦉 Owl" },
+};
 
 interface Props {
   targetUser: User;
@@ -37,7 +45,6 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
 
   const intelligenceData = Object.entries(results.intelligence.percentages).map(([key, value]) => ({ name: key, value }));
   const careerData = Object.entries(results.career.percentages).map(([key, value]) => ({ name: key, value }));
-
   const learningData = Object.entries(results.learningStyle.percentages).map(([key, value]) => ({ name: key, value }));
 
   const discRadarData = [
@@ -56,166 +63,11 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
     { name: "Career", value: Math.max(...Object.values(results.career.percentages)) },
   ];
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const pw = doc.internal.pageSize.getWidth();
-
-    // Header
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, pw, 45, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text("Mind Mapping Assessment Report", pw / 2, 18, { align: "center" });
-    doc.setFontSize(11);
-    doc.text(`${targetUser.name} • ${targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1)}`, pw / 2, 28, { align: "center" });
-    if (targetUser.companyName) {
-      doc.text(`${targetUser.companyName} (${targetUser.companyCode}) • ${targetUser.department || ""}`, pw / 2, 36, { align: "center" });
-    }
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pw / 2, targetUser.companyName ? 42 : 36, { align: "center" });
-
-    doc.setTextColor(0, 0, 0);
-    let y = 55;
-
-    // DISC
-    doc.setFontSize(14);
-    doc.setTextColor(59, 130, 246);
-    doc.text("DISC Personality", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(`Type: ${results.disc.dominant}`, 20, y);
-    y += 7;
-    doc.text(`D: ${results.disc.percentages.D}% | I: ${results.disc.percentages.I}% | S: ${results.disc.percentages.S}% | C: ${results.disc.percentages.C}%`, 20, y);
-    y += 15;
-
-    // MBTI
-    doc.setFontSize(14);
-    doc.setTextColor(139, 92, 246);
-    doc.text("MBTI Personality", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(`Type: ${results.mbti.type}`, 20, y);
-    y += 15;
-
-    // Intelligence
-    doc.setFontSize(14);
-    doc.setTextColor(16, 185, 129);
-    doc.text("Multiple Intelligence (Top 2)", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(results.intelligence.top2.join(" & "), 20, y);
-    y += 7;
-    Object.entries(results.intelligence.percentages).forEach(([k, v]) => {
-      doc.text(`${k}: ${v}%`, 25, y);
-      y += 6;
-    });
-    y += 8;
-
-    // Learning Style
-    doc.setFontSize(14);
-    doc.setTextColor(245, 158, 11);
-    doc.text("Learning Style", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(`Dominant: ${results.learningStyle.dominant}`, 20, y);
-    y += 7;
-    Object.entries(results.learningStyle.percentages).forEach(([k, v]) => {
-      doc.text(`${k}: ${v}%`, 25, y);
-      y += 6;
-    });
-    y += 8;
-
-    // Quotients
-    doc.setFontSize(14);
-    doc.setTextColor(6, 182, 212);
-    doc.text("Quotients", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(`IQ: ${results.quotients.IQ}% | EQ: ${results.quotients.EQ}% | AQ: ${results.quotients.AQ}% | CQ: ${results.quotients.CQ}%`, 20, y);
-    y += 15;
-
-    // Career
-    doc.setFontSize(14);
-    doc.setTextColor(236, 72, 153);
-    doc.text("Career Mapping (RIASEC)", 20, y);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    y += 10;
-    doc.text(`Top: ${results.career.top2.join(" & ")}`, 20, y);
-    y += 7;
-    doc.text(`Roles: ${results.career.suggestedRoles.join(", ")}`, 20, y);
-
-    // Brain Dominance
-    if (targetUser.role === "employee") {
-      y += 15;
-      doc.setFontSize(14);
-      doc.setTextColor(99, 102, 241);
-      doc.text("Brain Dominance", 20, y);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(11);
-      y += 10;
-      doc.text(`Left Brain: ${results.brainDominance.left}% | Right Brain: ${results.brainDominance.right}%`, 20, y);
-    }
-
-    // SWOT page
-    doc.addPage();
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, pw, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text("SWOT Analysis", pw / 2, 14, { align: "center" });
-    doc.setTextColor(0, 0, 0);
-
-    const sections = [
-      { title: "Strengths", items: results.swot.strengths, color: [34, 197, 94] as [number, number, number] },
-      { title: "Weaknesses", items: results.swot.weaknesses, color: [239, 68, 68] as [number, number, number] },
-      { title: "Opportunities", items: results.swot.opportunities, color: [59, 130, 246] as [number, number, number] },
-      { title: "Threats", items: results.swot.threats, color: [245, 158, 11] as [number, number, number] },
-    ];
-
-    let sy = 35;
-    sections.forEach(section => {
-      doc.setFontSize(13);
-      doc.setTextColor(...section.color);
-      doc.text(section.title, 20, sy);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
-      sy += 8;
-      section.items.forEach(item => {
-        doc.text(`• ${item}`, 25, sy);
-        sy += 7;
-      });
-      sy += 8;
-    });
-
-    // Recommendations
-    sy += 5;
-    doc.setFontSize(14);
-    doc.setTextColor(59, 130, 246);
-    doc.text("Recommendations", 20, sy);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    sy += 10;
-    const recs = [
-      `Focus on developing ${results.intelligence.top2[0]} intelligence for career growth.`,
-      `Your ${results.learningStyle.dominant} learning style suggests using ${results.learningStyle.dominant === "Visual" ? "diagrams and videos" : results.learningStyle.dominant === "Auditory" ? "podcasts and discussions" : "hands-on practice"}.`,
-      `Consider careers in ${results.career.top2.join(" and ")} domains.`,
-      results.quotients.AQ < 70 ? "Work on building resilience and adversity management." : "Your resilience is strong — maintain it.",
-      `Your MBTI type (${results.mbti.type}) aligns well with ${results.career.suggestedRoles[0]} roles.`,
-    ];
-    recs.forEach(r => {
-      doc.text(`• ${r}`, 25, sy);
-      sy += 7;
-    });
-
-    doc.save(`${targetUser.name.replace(/\s+/g, "_")}_Assessment_Report.pdf`);
-  };
-
   const handlePrint = () => window.print();
+  const birdInfo = birdIcons[results.disc.bird] || birdIcons.Eagle;
+  const discKey = results.disc.bird === "Eagle" ? "D" : results.disc.bird === "Parrot" ? "I" : results.disc.bird === "Dove" ? "S" : "C";
+  const mbtiInfo = mbtiInterpretations[results.mbti.type];
+  const discInfo = discInterpretations[discKey];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -233,43 +85,79 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
               {targetUser.role}
               {targetUser.companyName && ` • ${targetUser.companyName}`}
               {targetUser.department && ` • ${targetUser.department}`}
+              {(targetUser as any).school && ` • ${(targetUser as any).school}`}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1" /> Print
           </Button>
-          <Button size="sm" onClick={generatePDF} className="gradient-primary text-primary-foreground">
-            <Download className="w-4 h-4 mr-1" /> PDF Report
+          <Button size="sm" variant="outline" onClick={() => generateDeepReport(targetUser, results)}>
+            <FileText className="w-4 h-4 mr-1" /> Full Report (14pg)
+          </Button>
+          <Button size="sm" onClick={() => generateDeepReport(targetUser, results)} className="gradient-primary text-primary-foreground">
+            <Download className="w-4 h-4 mr-1" /> Download PDF
           </Button>
         </div>
       </div>
 
-      {/* Summary Badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+      {/* Summary Badges with Bird Icons */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <Card className="shadow-card border-2 border-primary/20">
+          <CardContent className="p-3 text-center">
+            <div className="text-3xl mb-1">{birdInfo.label.split(" ")[0]}</div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">DISC</p>
+            <p className="text-sm font-display font-bold text-primary">{results.disc.dominant.split(" ")[0]}</p>
+            <p className="text-[10px] text-muted-foreground">{birdInfo.label.split(" ")[1]}</p>
+          </CardContent>
+        </Card>
         {[
-          { label: "DISC", value: results.disc.bird, sub: results.disc.dominant.split(" ")[0] },
-          { label: "MBTI", value: results.mbti.type, sub: "Personality" },
-          { label: "Learning", value: results.learningStyle.dominant, sub: "Style" },
-          { label: "IQ", value: `${results.quotients.IQ}%`, sub: "Intelligence" },
-          { label: "EQ", value: `${results.quotients.EQ}%`, sub: "Emotional" },
-          { label: "Career", value: results.career.top2[0], sub: results.career.top2[1] },
+          { label: "MBTI", value: results.mbti.type, sub: mbtiInfo?.title || "Personality", emoji: "🧠" },
+          { label: "Learning", value: results.learningStyle.dominant, sub: "Style", emoji: "📚" },
+          { label: "IQ", value: `${results.quotients.IQ}%`, sub: "Intelligence", emoji: "💡" },
+          { label: "EQ", value: `${results.quotients.EQ}%`, sub: "Emotional", emoji: "❤️" },
+          { label: "Career", value: results.career.top2[0], sub: results.career.top2[1], emoji: "🎯" },
         ].map(badge => (
           <Card key={badge.label} className="shadow-card">
             <CardContent className="p-3 text-center">
+              <div className="text-2xl mb-1">{badge.emoji}</div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{badge.label}</p>
-              <p className="text-lg font-display font-bold text-primary mt-1">{badge.value}</p>
+              <p className="text-sm font-display font-bold text-primary">{badge.value}</p>
               <p className="text-[10px] text-muted-foreground">{badge.sub}</p>
             </CardContent>
           </Card>
         ))}
+        {targetUser.role === "employee" && (
+          <Card className="shadow-card">
+            <CardContent className="p-3 text-center">
+              <div className="text-2xl mb-1">🧬</div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Brain</p>
+              <p className="text-sm font-display font-bold text-primary">L:{results.brainDominance.left}%</p>
+              <p className="text-[10px] text-muted-foreground">R:{results.brainDominance.right}%</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Personality Summary */}
+      <Card className="shadow-card bg-gradient-to-r from-primary/5 to-secondary/5">
+        <CardContent className="p-5">
+          <h3 className="text-sm font-display font-semibold mb-2 text-primary">📝 Personality Summary</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {targetUser.name} is a <strong>{results.disc.dominant}</strong> personality with <strong>{results.mbti.type}</strong> ({mbtiInfo?.title || ""}) type.
+            As a <strong>{results.learningStyle.dominant}</strong> learner with strong <strong>{results.intelligence.top2.join(" and ")}</strong> intelligence,
+            they demonstrate {results.quotients.EQ >= 70 ? "strong emotional awareness" : "developing emotional skills"} and
+            {results.quotients.IQ >= 70 ? " solid analytical capability" : " growing analytical ability"}.
+            Their career aptitude aligns with <strong>{results.career.top2.join(" and ")}</strong> domains.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Overall Profile Area Chart */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-display">Overall Profile Snapshot</CardTitle>
+          <CardTitle className="text-base font-display">📊 Overall Profile Snapshot</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-48">
@@ -287,10 +175,13 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* DISC Pie + Radar */}
+        {/* DISC Pie */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display">DISC Personality</CardTitle>
+            <CardTitle className="text-base font-display">
+              <span className="text-xl mr-2">{birdInfo.label.split(" ")[0]}</span>
+              DISC Personality
+            </CardTitle>
             <p className="text-sm text-primary font-medium">{results.disc.dominant}</p>
           </CardHeader>
           <CardContent>
@@ -304,13 +195,14 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            <p className="text-xs text-muted-foreground mt-2 italic">{discInfo?.brief}</p>
           </CardContent>
         </Card>
 
         {/* DISC Radar */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display">DISC Radar</CardTitle>
+            <CardTitle className="text-base font-display">📈 DISC Radar</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-44">
@@ -328,10 +220,11 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
         {/* MBTI */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display">MBTI Personality</CardTitle>
+            <CardTitle className="text-base font-display">🧠 MBTI — {results.mbti.type}</CardTitle>
+            {mbtiInfo && <p className="text-xs text-muted-foreground">{mbtiInfo.title}</p>}
           </CardHeader>
           <CardContent className="flex flex-col items-center">
-            <div className="text-4xl font-display font-bold text-gradient mb-3">{results.mbti.type}</div>
+            <div className="text-4xl font-display font-bold text-gradient mb-2">{results.mbti.type}</div>
             <div className="grid grid-cols-2 gap-1.5 text-xs w-full">
               {(["E", "I", "S", "N", "T", "F", "J", "P"] as const).map(k => (
                 <div key={k} className="flex justify-between px-2 py-1 rounded bg-muted">
@@ -346,7 +239,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
         {/* Quotients Radar */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display">Quotients</CardTitle>
+            <CardTitle className="text-base font-display">💡 Quotients</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-44">
@@ -369,10 +262,10 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
           </CardContent>
         </Card>
 
-        {/* Learning Style Donut */}
+        {/* Learning Style */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-display">Learning Style</CardTitle>
+            <CardTitle className="text-base font-display">📚 Learning Style</CardTitle>
             <p className="text-sm text-primary font-medium">{results.learningStyle.dominant}</p>
           </CardHeader>
           <CardContent>
@@ -394,35 +287,23 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
         {targetUser.role === "employee" && (
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-display">Brain Dominance</CardTitle>
+              <CardTitle className="text-base font-display">🧬 Brain Dominance</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex-1 text-center">
                   <div className="text-2xl font-bold text-primary">{results.brainDominance.left}%</div>
-                  <p className="text-xs text-muted-foreground">Left (Logical)</p>
+                  <p className="text-xs text-muted-foreground">🔬 Left (Logical)</p>
                 </div>
                 <div className="w-px h-12 bg-border" />
                 <div className="flex-1 text-center">
                   <div className="text-2xl font-bold text-secondary">{results.brainDominance.right}%</div>
-                  <p className="text-xs text-muted-foreground">Right (Creative)</p>
+                  <p className="text-xs text-muted-foreground">🎨 Right (Creative)</p>
                 </div>
               </div>
               <div className="h-4 bg-muted rounded-full overflow-hidden flex">
                 <div className="h-full gradient-primary rounded-l-full" style={{ width: `${results.brainDominance.left}%` }} />
                 <div className="h-full bg-secondary rounded-r-full" style={{ width: `${results.brainDominance.right}%` }} />
-              </div>
-              <div className="mt-4 h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={[{ name: "Brain", Left: results.brainDominance.left, Right: results.brainDominance.right }]}>
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Bar dataKey="Left" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Right" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                    <Legend />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -432,7 +313,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       {/* Intelligence Full Width */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-display">Multiple Intelligence</CardTitle>
+          <CardTitle className="text-base font-display">🌟 Multiple Intelligence</CardTitle>
           <p className="text-sm text-muted-foreground">Top 2: {results.intelligence.top2.join(" & ")}</p>
         </CardHeader>
         <CardContent>
@@ -452,12 +333,12 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
         </CardContent>
       </Card>
 
-      {/* Career Mapping Full Width */}
+      {/* Career Mapping */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <CardTitle className="text-base font-display">Career Mapping (RIASEC)</CardTitle>
+              <CardTitle className="text-base font-display">🎯 Career Mapping (RIASEC)</CardTitle>
               <p className="text-sm text-muted-foreground">Top: {results.career.top2.join(" & ")}</p>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -487,15 +368,15 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       {/* SWOT */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-display">SWOT Analysis</CardTitle>
+          <CardTitle className="text-base font-display">🛡️ SWOT Analysis</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { title: "Strengths", items: results.swot.strengths, bg: "bg-green-50 border-green-200", text: "text-green-800", icon: "💪" },
-              { title: "Weaknesses", items: results.swot.weaknesses, bg: "bg-red-50 border-red-200", text: "text-red-800", icon: "⚠️" },
-              { title: "Opportunities", items: results.swot.opportunities, bg: "bg-blue-50 border-blue-200", text: "text-blue-800", icon: "🚀" },
-              { title: "Threats", items: results.swot.threats, bg: "bg-amber-50 border-amber-200", text: "text-amber-800", icon: "🛡️" },
+              { title: "Strengths", items: results.swot.strengths, bg: "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800", text: "text-green-800 dark:text-green-300", icon: "💪" },
+              { title: "Weaknesses", items: results.swot.weaknesses, bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800", text: "text-red-800 dark:text-red-300", icon: "⚠️" },
+              { title: "Opportunities", items: results.swot.opportunities, bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800", text: "text-blue-800 dark:text-blue-300", icon: "🚀" },
+              { title: "Threats", items: results.swot.threats, bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800", text: "text-amber-800 dark:text-amber-300", icon: "🛡️" },
             ].map(section => (
               <div key={section.title} className={`p-4 rounded-lg border ${section.bg} ${section.text}`}>
                 <h3 className="font-display font-semibold mb-2">{section.icon} {section.title}</h3>
@@ -513,31 +394,41 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       {/* Recommendations */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-display">📋 Recommendations</CardTitle>
+          <CardTitle className="text-base font-display">📋 Recommendations & Next Steps</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             <li className="p-3 rounded-lg bg-muted">
-              <span className="font-medium">Intelligence Focus:</span> Develop your {results.intelligence.top2[0]} intelligence for maximum career impact.
+              <span className="font-medium">🌟 Intelligence Focus:</span> Develop your {results.intelligence.top2[0]} intelligence for maximum career impact.
             </li>
             <li className="p-3 rounded-lg bg-muted">
-              <span className="font-medium">Learning Strategy:</span> As a {results.learningStyle.dominant} learner, use{" "}
+              <span className="font-medium">📚 Learning Strategy:</span> As a {results.learningStyle.dominant} learner, use{" "}
               {results.learningStyle.dominant === "Visual" ? "diagrams, mind maps, and videos" : results.learningStyle.dominant === "Auditory" ? "podcasts, discussions, and verbal instructions" : "hands-on projects, simulations, and experiments"}.
             </li>
             <li className="p-3 rounded-lg bg-muted">
-              <span className="font-medium">Career Path:</span> Explore {results.career.top2.join(" and ")} domains — consider roles like {results.career.suggestedRoles.join(", ")}.
+              <span className="font-medium">🎯 Career Path:</span> Explore {results.career.top2.join(" and ")} domains — consider roles like {results.career.suggestedRoles.join(", ")}.
             </li>
             <li className="p-3 rounded-lg bg-muted">
-              <span className="font-medium">Personality:</span> Your {results.mbti.type} personality combined with {results.disc.dominant} DISC type makes you well-suited for collaborative and structured environments.
+              <span className="font-medium">🧠 Personality:</span> Your {results.mbti.type} ({mbtiInfo?.title || ""}) combined with {results.disc.dominant} makes you well-suited for {discInfo?.workFit?.split(".")[0] || "specialized environments"}.
             </li>
             {results.quotients.AQ < 70 && (
               <li className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                <span className="font-medium text-destructive">Growth Area:</span> Focus on building resilience (AQ: {results.quotients.AQ}%) through challenging projects and mindset training.
+                <span className="font-medium text-destructive">⚡ Growth Area:</span> Focus on building resilience (AQ: {results.quotients.AQ}%) through challenging projects.
               </li>
             )}
           </ul>
         </CardContent>
       </Card>
+
+      {/* Download footer */}
+      <div className="flex justify-center gap-3 py-4">
+        <Button variant="outline" onClick={handlePrint}>
+          <Printer className="w-4 h-4 mr-2" /> Print Report
+        </Button>
+        <Button onClick={() => generateDeepReport(targetUser, results)} className="gradient-primary text-primary-foreground">
+          <Download className="w-4 h-4 mr-2" /> Download Deep Report (14 Pages)
+        </Button>
+      </div>
     </div>
   );
 }
