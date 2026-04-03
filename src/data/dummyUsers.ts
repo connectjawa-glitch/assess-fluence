@@ -54,6 +54,7 @@ export function initializeDummyData() {
 
   // Clear old data
   localStorage.removeItem("mm_dummy_initialized");
+  localStorage.removeItem("mm_dummy_v2");
 
   // Initialize companies
   const companies: Company[] = defaultCompanies.map(c => ({ ...c, id: crypto.randomUUID() }));
