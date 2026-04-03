@@ -32,7 +32,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-lg font-display font-bold text-primary-foreground">Welcome, {user.name}</h1>
-              <p className="text-xs text-primary-foreground/70 capitalize">{user.role} {user.companyName ? `• ${user.companyName}` : ""}</p>
+              <p className="text-xs text-primary-foreground/70 capitalize">{user.role} {user.companyName ? `• ${user.companyName}` : ""}{user.school ? ` • ${user.school}` : ""}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => { logout(); navigate("/"); }}>Logout</Button>
