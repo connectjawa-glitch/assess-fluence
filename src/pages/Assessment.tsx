@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import type { Responses } from "@/lib/scoring";
-import { Clock, ChevronLeft, ChevronRight, CheckCircle, Circle, Save, LogOut } from "lucide-react";
+import { Clock, ChevronLeft, ChevronRight, CheckCircle, Save } from "lucide-react";
 
 const scaleLabels = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
 

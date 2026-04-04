@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area
 } from "recharts";
 import { generateDeepReport } from "@/lib/pdfReport";
-import { Download, Printer, ArrowLeft, FileText } from "lucide-react";
+import { Download, Printer, ArrowLeft } from "lucide-react";
 import {
   mbtiInterpretations, discInterpretations, intelligenceDescriptions,
   learningStyleDetails, quotientInterpretations, careerTypeDetails,
