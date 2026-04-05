@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,8 +28,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-elevated animate-fade-in">
         <CardHeader className="text-center">
+          <img src={perfyLogo} alt="Perfy" className="h-12 mx-auto mb-3 rounded-lg bg-foreground/5 p-1" />
           <CardTitle className="text-2xl font-display text-gradient">Sign In</CardTitle>
-          <p className="text-muted-foreground text-sm mt-1">Mind Mapping & Assessment Portal</p>
+          <p className="text-muted-foreground text-sm mt-1">Perfy — From Effort to Impact</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

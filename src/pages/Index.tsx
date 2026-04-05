@@ -2,15 +2,22 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Users, BarChart3, FileText, Sparkles, Target } from "lucide-react";
+import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, Zap, ArrowRight } from "lucide-react";
+import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const features = [
-  { icon: Brain, title: "DISC & MBTI", desc: "Discover your personality type and communication style" },
-  { icon: Sparkles, title: "Multiple Intelligence", desc: "Identify your top intelligences from 8 types" },
-  { icon: Target, title: "Career Mapping", desc: "RIASEC-based career recommendations" },
-  { icon: BarChart3, title: "Quotients", desc: "Measure your IQ, EQ, AQ, and CQ" },
-  { icon: FileText, title: "SWOT Analysis", desc: "Automated strengths, weaknesses, opportunities & threats" },
-  { icon: Users, title: "Brain Dominance", desc: "Left vs Right brain analysis for employees" },
+  { icon: Brain, title: "DISC & MBTI", desc: "Discover your personality type, bird archetype, and communication style with deep explanations" },
+  { icon: Sparkles, title: "Multiple Intelligence", desc: "Identify your top intelligences from 8 types with real-life applications" },
+  { icon: Target, title: "Career Mapping (RIASEC)", desc: "Holland's RIASEC-based career recommendations with industry paths" },
+  { icon: BarChart3, title: "IQ, EQ, AQ, CQ", desc: "Measure Intelligence, Emotional, Adversity & Creative Quotients" },
+  { icon: FileText, title: "SWOT Analysis", desc: "Automated strengths, weaknesses, opportunities & threats with explanations" },
+  { icon: Users, title: "Deep Interpretation Report", desc: "10-section professional report with graphs, correlations & action plans" },
+];
+
+const testimonials = [
+  { name: "Dr. Priya Sharma", role: "Career Counselor", text: "Perfy transformed how I deliver career guidance. The reports are professional and deeply insightful." },
+  { name: "Arjun Mehta", role: "HR Director", text: "We use Perfy for all employee assessments. The company-wise filtering and reports save us hours." },
+  { name: "Sarah Johnson", role: "Student", text: "I finally understand my learning style and personality. The action plan helped me improve my study habits." },
 ];
 
 export default function Index() {
@@ -23,7 +30,9 @@ export default function Index() {
       <div className="gradient-hero text-primary-foreground">
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
           <nav className="flex items-center justify-between mb-12">
-            <h2 className="text-xl font-display font-bold">MindMap Portal</h2>
+            <div className="flex items-center gap-3">
+              <img src={perfyLogo} alt="Perfy Logo" className="h-10 w-auto rounded-lg bg-white p-1" />
+            </div>
             {user ? (
               <Button variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}>
                 Dashboard
@@ -36,19 +45,22 @@ export default function Index() {
             )}
           </nav>
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 leading-tight">
-              Mind Mapping &<br />Assessment Portal
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-foreground/10 text-sm mb-6 animate-fade-in">
+              <Zap className="w-4 h-4" /> 199 Research-Backed Questions • 10-Section Deep Report
+            </div>
+            <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 leading-tight animate-fade-in">
+              From Effort to Impact
             </h1>
-            <p className="text-lg md:text-xl opacity-80 mb-8">
-              Comprehensive personality assessment covering DISC, MBTI, Multiple Intelligence,
-              Learning Styles, Quotients & Career Mapping — for students and employees.
+            <p className="text-lg md:text-xl opacity-80 mb-8 animate-fade-in">
+              Comprehensive personality & performance assessment covering DISC, MBTI, Multiple Intelligence,
+              Learning Styles, Quotients & Career Mapping — powered by deep interpretation engines.
             </p>
-            <div className="flex gap-4 justify-center">
-              <Button size="lg" className="bg-primary-foreground text-foreground hover:bg-primary-foreground/90 font-display" onClick={() => navigate("/register")}>
-                Take Assessment
+            <div className="flex gap-4 justify-center animate-fade-in">
+              <Button size="lg" className="bg-primary-foreground text-foreground hover:bg-primary-foreground/90 font-display gap-2" onClick={() => navigate("/register")}>
+                Take Assessment <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/login")}>
-                Sign In
+              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/pricing")}>
+                View Plans
               </Button>
             </div>
           </div>
@@ -58,12 +70,14 @@ export default function Index() {
       {/* Features */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-4">Comprehensive Assessment System</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">199 research-backed questions across 6 categories to map your mind and unlock your potential</p>
+        <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">Transform raw data into meaning, insight, and action with our three-engine interpretation system</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map(f => (
-            <Card key={f.title} className="shadow-card hover:shadow-elevated transition-shadow animate-fade-in">
+          {features.map((f, i) => (
+            <Card key={f.title} className="shadow-card hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
               <CardContent className="p-6">
-                <f.icon className="w-10 h-10 text-primary mb-4" />
+                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
+                  <f.icon className="w-6 h-6 text-primary-foreground" />
+                </div>
                 <h3 className="text-lg font-display font-semibold mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
               </CardContent>
@@ -75,32 +89,35 @@ export default function Index() {
       {/* Two Systems */}
       <div className="bg-muted/50 py-16">
         <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-2xl font-display font-bold text-center mb-8">Two Powerful Systems</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <Card className="shadow-card">
+            <Card className="shadow-card hover:shadow-elevated transition-all">
               <CardContent className="p-8">
                 <div className="w-12 h-12 rounded-lg gradient-primary flex items-center justify-center mb-4">
                   <Brain className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h3 className="text-xl font-display font-bold mb-2">Student System</h3>
+                <h3 className="text-xl font-display font-bold mb-2">🎓 Student System</h3>
                 <p className="text-muted-foreground mb-4">Learning assessment with personality profiling, intelligence mapping, and academic career guidance.</p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• DISC & MBTI Personality</li>
-                  <li>• Multiple Intelligence & Learning Style</li>
-                  <li>• Career Mapping & SWOT Analysis</li>
+                  <li className="flex items-center gap-2"><Star className="w-3.5 h-3.5 text-primary" /> DISC & MBTI Personality</li>
+                  <li className="flex items-center gap-2"><Star className="w-3.5 h-3.5 text-primary" /> Multiple Intelligence & Learning Style</li>
+                  <li className="flex items-center gap-2"><Star className="w-3.5 h-3.5 text-primary" /> Career Mapping & SWOT Analysis</li>
+                  <li className="flex items-center gap-2"><Star className="w-3.5 h-3.5 text-primary" /> School/College based grouping</li>
                 </ul>
               </CardContent>
             </Card>
-            <Card className="shadow-card">
+            <Card className="shadow-card hover:shadow-elevated transition-all">
               <CardContent className="p-8">
                 <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center mb-4">
                   <Users className="w-6 h-6 text-secondary-foreground" />
                 </div>
-                <h3 className="text-xl font-display font-bold mb-2">Employee System</h3>
-                <p className="text-muted-foreground mb-4">Performance profiling with brain dominance analysis and professional development insights.</p>
+                <h3 className="text-xl font-display font-bold mb-2">💼 Employee System</h3>
+                <p className="text-muted-foreground mb-4">Performance profiling with brain dominance analysis and company-wise management.</p>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• All Student assessments included</li>
-                  <li>• Brain Dominance (Left vs Right)</li>
-                  <li>• Professional career recommendations</li>
+                  <li className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-secondary" /> All Student assessments included</li>
+                  <li className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-secondary" /> Brain Dominance (Left vs Right)</li>
+                  <li className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-secondary" /> Company code registration</li>
+                  <li className="flex items-center gap-2"><Shield className="w-3.5 h-3.5 text-secondary" /> Company-wise reporting & export</li>
                 </ul>
               </CardContent>
             </Card>
@@ -108,9 +125,29 @@ export default function Index() {
         </div>
       </div>
 
+      {/* Testimonials */}
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h2 className="text-2xl font-display font-bold text-center mb-8">What People Say</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {testimonials.map(t => (
+            <Card key={t.name} className="shadow-card">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-1 mb-3">
+                  {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-primary text-primary" />)}
+                </div>
+                <p className="text-sm text-muted-foreground italic mb-4">"{t.text}"</p>
+                <p className="text-sm font-display font-semibold">{t.name}</p>
+                <p className="text-xs text-muted-foreground">{t.role}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-muted-foreground border-t">
-        <p>Mind Mapping & Assessment Portal • Powered by Research-Based Psychometrics</p>
+        <img src={perfyLogo} alt="Perfy" className="h-8 mx-auto mb-3 rounded bg-foreground/5 p-0.5" />
+        <p>Perfy — From Effort to Impact • Powered by Research-Based Psychometrics</p>
       </footer>
     </div>
   );
