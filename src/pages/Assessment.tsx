@@ -84,7 +84,7 @@ export default function AssessmentPage() {
       <div className="sticky top-0 z-10 bg-card border-b shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-display font-bold text-foreground hidden sm:block">Assessment</h1>
+            <h1 className="text-lg font-display font-bold text-foreground hidden sm:block">Perfy Assessment</h1>
             <span className="text-xs text-muted-foreground">{user.name}</span>
           </div>
           <div className="flex items-center gap-3">

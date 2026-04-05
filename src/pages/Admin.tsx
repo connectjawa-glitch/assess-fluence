@@ -16,6 +16,7 @@ import {
 import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3 } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import jsPDF from "jspdf";
+import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
@@ -238,12 +239,10 @@ export default function AdminPage() {
       <div className="gradient-hero">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <BarChart3 className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={perfyLogo} alt="Perfy" className="h-9 rounded-lg bg-white p-0.5" />
             <div>
-              <h1 className="text-lg font-display font-bold text-primary-foreground">Admin Dashboard</h1>
-              <p className="text-xs text-primary-foreground/70">Mind Mapping & Assessment Portal</p>
+              <h1 className="text-lg font-display font-bold text-primary-foreground">Perfy Admin</h1>
+              <p className="text-xs text-primary-foreground/70">From Effort to Impact</p>
             </div>
           </div>
           <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => { logout(); navigate("/"); }}>
