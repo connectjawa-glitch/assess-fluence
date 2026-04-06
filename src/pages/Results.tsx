@@ -23,7 +23,7 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between gap-2 mb-4">
-          <img src={perfyLogo} alt="Perfy" className="h-8 rounded-lg bg-foreground/5 p-0.5" />
+          <img src={perfyLogo} alt="Perfy" className="h-12 rounded-xl bg-foreground/5 p-0.5 shadow-sm" />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>Dashboard</Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/assessment")}>Retake</Button>

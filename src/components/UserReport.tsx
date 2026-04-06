@@ -107,7 +107,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
           {showBackButton && onBack && (
             <Button variant="outline" size="icon" onClick={onBack}><ArrowLeft className="w-4 h-4" /></Button>
           )}
-          <img src={perfyLogo} alt="Perfy" className="h-9 rounded-lg bg-foreground/5 p-0.5" />
+          <img src={perfyLogo} alt="Perfy" className="h-14 w-14 rounded-xl bg-foreground/5 p-0.5 shadow-md object-cover" />
           <div>
             <h2 className="text-xl font-display font-bold text-foreground">{targetUser.name}</h2>
             <p className="text-sm text-muted-foreground capitalize">
