@@ -31,7 +31,7 @@ export default function Index() {
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
           <nav className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-3">
-              <img src={perfyLogo} alt="Perfy Logo" className="h-10 w-auto rounded-lg bg-white p-1" />
+              <img src={perfyLogo} alt="Perfy Logo" className="h-14 w-auto rounded-xl bg-white p-1 shadow-md" />
             </div>
             {user ? (
               <Button variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}>
