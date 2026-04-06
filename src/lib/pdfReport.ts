@@ -123,20 +123,7 @@ function progressBar(doc: jsPDF, label: string, value: number, y: number, barW =
   return y + 8;
 }
 
-function colorBox(doc: jsPDF, title: string, content: string, y: number, color: readonly [number, number, number]): number {
-  y = ensureSpace(doc, y, 20);
-  const boxH = Math.max(18, doc.splitTextToSize(content, CONTENT_W - 12).length * 4.5 + 12);
-  doc.setFillColor(color[0], color[1], color[2]); doc.setGlobalAlpha?.(0.08);
-  doc.setFillColor(Math.min(255, color[0] + 180), Math.min(255, color[1] + 180), Math.min(255, color[2] + 180));
-  doc.roundedRect(MARGIN, y - 4, CONTENT_W, boxH, 2, 2, "F");
-  doc.setTextColor(...color); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-  doc.text(title, MARGIN + 5, y + 2);
-  doc.setFont("helvetica", "normal"); doc.setTextColor(50, 50, 50); doc.setFontSize(9);
-  const lines = doc.splitTextToSize(content, CONTENT_W - 12);
-  doc.text(lines, MARGIN + 5, y + 8);
-  doc.setTextColor(0, 0, 0); doc.setFontSize(10);
-  return y + boxH + 4;
-}
+// removed unused colorBox
 
 function ensureSpace(doc: jsPDF, y: number, needed: number): number {
   if (y + needed > MAX_Y) { doc.addPage(); return 15; }
