@@ -7,6 +7,7 @@ import {
   learningStyleDetails, quotientInterpretations, careerTypeDetails,
   generateCorrelationInsight, generateActionPlan, generateCareerRoadmap
 } from "@/lib/interpretations";
+import { drawRadarChart, drawPieChart, drawHBarChart, drawComparisonBars, drawGauge } from "@/lib/pdfCharts";
 
 const BLUE = [59, 130, 246] as const;
 const DARK = [30, 41, 59] as const;
@@ -26,7 +27,6 @@ const MAX_Y = PH - FOOTER_H - 10;
 
 function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?: string) {
   const pw = doc.internal.pageSize.getWidth();
-  // Dark header bar
   doc.setFillColor(...DARK);
   doc.rect(0, 0, pw, subtitle ? 30 : 24, "F");
   doc.setTextColor(255, 255, 255);
@@ -43,10 +43,10 @@ function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?:
 function sectionTitle(doc: jsPDF, text: string, y: number, color: readonly [number, number, number] = BLUE): number {
   y = ensureSpace(doc, y, 14);
   doc.setFontSize(13); doc.setFont("helvetica", "bold"); doc.setTextColor(...color);
-  doc.text(text, MARGIN, y);
-  // underline
+  const lines = doc.splitTextToSize(text, CONTENT_W);
+  doc.text(lines[0], MARGIN, y);
   doc.setDrawColor(...color); doc.setLineWidth(0.5);
-  doc.line(MARGIN, y + 1.5, MARGIN + doc.getTextWidth(text), y + 1.5);
+  doc.line(MARGIN, y + 1.5, MARGIN + Math.min(doc.getTextWidth(lines[0]), CONTENT_W), y + 1.5);
   doc.setDrawColor(0, 0, 0);
   doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
   return y + 8;
@@ -55,17 +55,19 @@ function sectionTitle(doc: jsPDF, text: string, y: number, color: readonly [numb
 function subTitle(doc: jsPDF, text: string, y: number): number {
   y = ensureSpace(doc, y, 10);
   doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...BLUE);
-  doc.text(text, MARGIN, y);
+  const lines = doc.splitTextToSize(text, CONTENT_W);
+  doc.text(lines, MARGIN, y);
   doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0); doc.setFontSize(10);
-  return y + 6;
+  return y + lines.length * 5 + 2;
 }
 
 function subSubTitle(doc: jsPDF, text: string, y: number): number {
   y = ensureSpace(doc, y, 8);
   doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(60, 60, 60);
-  doc.text(text, MARGIN + 3, y);
+  const lines = doc.splitTextToSize(text, CONTENT_W - 3);
+  doc.text(lines, MARGIN + 3, y);
   doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
-  return y + 5;
+  return y + lines.length * 4.5 + 2;
 }
 
 function para(doc: jsPDF, text: string, x: number, y: number, maxW: number, fontSize = 10, lineH = 5): number {
@@ -95,7 +97,8 @@ function boldLabel(doc: jsPDF, label: string, value: string, y: number, x = MARG
   doc.setFont("helvetica", "bold"); doc.text(label, x, y);
   doc.setFont("helvetica", "normal");
   const labelW = doc.getTextWidth(label) + 2;
-  const lines = doc.splitTextToSize(value, CONTENT_W - labelW - (x - MARGIN));
+  const availW = CONTENT_W - labelW - (x - MARGIN);
+  const lines = doc.splitTextToSize(value, availW);
   doc.text(lines, x + labelW, y);
   return y + Math.max(lines.length * 5, 6);
 }
@@ -113,7 +116,8 @@ function bullets(doc: jsPDF, items: string[], x: number, y: number, maxW: number
 function progressBar(doc: jsPDF, label: string, value: number, y: number, barW = 90, color: readonly [number, number, number] = BLUE): number {
   y = ensureSpace(doc, y, 10);
   doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-  doc.text(`${label}:`, MARGIN, y);
+  const labelLines = doc.splitTextToSize(`${label}:`, 48);
+  doc.text(labelLines, MARGIN, y);
   doc.setFont("helvetica", "normal");
   doc.text(`${value}%`, MARGIN + 50, y);
   const barX = MARGIN + 60;
@@ -122,8 +126,6 @@ function progressBar(doc: jsPDF, label: string, value: number, y: number, barW =
   doc.setFontSize(10);
   return y + 8;
 }
-
-// removed unused colorBox
 
 function ensureSpace(doc: jsPDF, y: number, needed: number): number {
   if (y + needed > MAX_Y) { doc.addPage(); return 15; }
@@ -141,6 +143,31 @@ function divider(doc: jsPDF, y: number): number {
   doc.line(MARGIN, y, MARGIN + CONTENT_W, y);
   doc.setDrawColor(0, 0, 0);
   return y + 5;
+}
+
+// Decorative box for key insights
+function insightBox(doc: jsPDF, text: string, y: number, color: readonly [number, number, number] = BLUE): number {
+  y = ensureSpace(doc, y, 25);
+  doc.setFontSize(9);
+  const lines = doc.splitTextToSize(text, CONTENT_W - 16);
+  const boxH = lines.length * 4.5 + 8;
+  // Light background
+  const lightBg: [number, number, number] = [
+    Math.round(color[0] * 0.08 + 255 * 0.92),
+    Math.round(color[1] * 0.08 + 255 * 0.92),
+    Math.round(color[2] * 0.08 + 255 * 0.92),
+  ];
+  doc.setFillColor(...lightBg);
+  doc.roundedRect(MARGIN, y - 3, CONTENT_W, boxH, 2, 2, "F");
+  // Left accent bar
+  doc.setFillColor(...color);
+  doc.rect(MARGIN, y - 3, 2, boxH, "F");
+  // Text
+  doc.setTextColor(40, 40, 40);
+  let ty = y + 2;
+  for (const line of lines) { doc.text(line, MARGIN + 8, ty); ty += 4.5; }
+  doc.setTextColor(0, 0, 0); doc.setFontSize(10);
+  return y + boxH + 3;
 }
 
 export function generateDeepReport(user: User, results: AssessmentResults) {
@@ -195,20 +222,24 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.setFontSize(10);
   doc.text(`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`, pw / 2, 160, { align: "center" });
 
-  // Quick stats at bottom of cover
-  const statsY = 190;
+  // Quotient gauges on cover
+  const gaugeY = 190;
+  const gaugeColors: (readonly [number, number, number])[] = [BLUE, GREEN, AMBER, PURPLE];
+  allScores.forEach((s, i) => {
+    const gx = MARGIN + 22 + i * 44;
+    drawGauge(doc, gx, gaugeY, 14, s.val, s.name.split("(")[0].trim(), [...gaugeColors[i]] as [number, number, number]);
+  });
+
   doc.setFontSize(9);
   const quickStats = [
     `DISC: ${discKey} (${birdName})`, `MBTI: ${results.mbti.type}`,
-    `IQ: ${results.quotients.IQ}%`, `EQ: ${results.quotients.EQ}%`,
-    `AQ: ${results.quotients.AQ}%`, `CQ: ${results.quotients.CQ}%`,
     `Style: ${results.learningStyle.dominant}`, `Career: ${results.career.top2.join(" & ")}`
   ];
-  doc.text(quickStats.join("   •   "), pw / 2, statsY, { align: "center", maxWidth: pw - 30 });
+  doc.text(quickStats.join("   •   "), pw / 2, 220, { align: "center", maxWidth: pw - 30 });
 
   doc.setFontSize(8);
   doc.text("This report contains 10 detailed sections across 20+ pages", pw / 2, PH - 30, { align: "center" });
-  doc.text("Data → Meaning → Insight → Action", pw / 2, PH - 24, { align: "center" });
+  doc.text("Data -> Meaning -> Insight -> Action", pw / 2, PH - 24, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
   // ====================================================================
@@ -245,7 +276,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
 
   y += 10;
   doc.setFontSize(9); doc.setTextColor(...GRAY);
-  doc.text("Each section provides: Explanation → Meaning → Insight → Actionable Guidance", MARGIN, y); y += 5;
+  doc.text("Each section provides: Explanation -> Meaning -> Insight -> Actionable Guidance", MARGIN, y); y += 5;
   doc.text("Every abbreviation is fully explained with context and reasoning", MARGIN, y); y += 5;
   doc.text("Report powered by Interpretation Engine, Correlation Engine & Recommendation Engine", MARGIN, y);
 
@@ -269,59 +300,80 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = explanation(doc, `DISC stands for Dominance, Influence, Steadiness, Compliance. It is a behavioral assessment model that categorizes personality into 4 dimensions. Your dominant dimension is "${discKey}" which is represented by the ${birdName} archetype. This means ${discInfo.brief}`, y);
 
   y = boldLabel(doc, "MBTI Type: ", `${results.mbti.type} — ${mbtiInfo?.title || ""}`, y);
-  y = explanation(doc, `MBTI stands for Myers-Briggs Type Indicator, a personality framework with 16 types based on 4 preference pairs: E/I (Extraversion vs Introversion — how you get energy), S/N (Sensing vs Intuition — how you process information), T/F (Thinking vs Feeling — how you make decisions), J/P (Judging vs Perceiving — how you organize your life). Your type ${results.mbti.type} means: ${results.mbti.type.split("").map((l: string) => l === "E" ? "Extraverted" : l === "I" ? "Introverted" : l === "S" ? "Sensing" : l === "N" ? "Intuitive" : l === "T" ? "Thinking" : l === "F" ? "Feeling" : l === "J" ? "Judging" : "Perceiving").join(", ")}.`, y);
+  y = explanation(doc, `MBTI stands for Myers-Briggs Type Indicator, a personality framework with 16 types based on 4 preference pairs: E/I (Extraversion vs Introversion), S/N (Sensing vs Intuition), T/F (Thinking vs Feeling), J/P (Judging vs Perceiving). Your type ${results.mbti.type} means: ${results.mbti.type.split("").map((l: string) => l === "E" ? "Extraverted" : l === "I" ? "Introverted" : l === "S" ? "Sensing" : l === "N" ? "Intuitive" : l === "T" ? "Thinking" : l === "F" ? "Feeling" : l === "J" ? "Judging" : "Perceiving").join(", ")}.`, y);
 
   y = boldLabel(doc, "Learning Style: ", results.learningStyle.dominant, y);
-  y = explanation(doc, `Learning style identifies how you absorb information best. The three types are Visual (learning by seeing), Auditory (learning by hearing), and Kinesthetic (learning by doing). Your dominant style "${results.learningStyle.dominant}" means ${lsInfo.howLearns}`, y);
+  y = explanation(doc, `Learning style identifies how you absorb information best. The three types are Visual (seeing), Auditory (hearing), and Kinesthetic (doing). Your dominant style "${results.learningStyle.dominant}" means ${lsInfo.howLearns}`, y);
 
   y = boldLabel(doc, "Top Intelligence: ", results.intelligence.top2.join(" & "), y);
-  y = boldLabel(doc, "Career Mapping: ", `${results.career.top2.join(" & ")} → ${results.career.suggestedRoles.slice(0, 3).join(", ")}`, y);
+  y = boldLabel(doc, "Career Mapping: ", `${results.career.top2.join(" & ")} -> ${results.career.suggestedRoles.slice(0, 3).join(", ")}`, y);
   if (user.role === "employee") y = boldLabel(doc, "Brain Dominance: ", `Left ${results.brainDominance.left}% / Right ${results.brainDominance.right}%`, y);
   y += 3;
 
-  y = sectionTitle(doc, "Quotient Scores Overview", y);
-  allScores.forEach(s => { y = progressBar(doc, s.name, s.val, y); });
-  y += 3;
+  // ★ RADAR CHART: Overall Profile Snapshot
+  y = ensureSpace(doc, y, 80);
+  y = sectionTitle(doc, "Overall Profile Radar", y);
+  const profileLabels = ["IQ", "EQ", "AQ", "CQ", "DISC", "Career"];
+  const profileValues = [
+    results.quotients.IQ, results.quotients.EQ, results.quotients.AQ, results.quotients.CQ,
+    Math.max(...Object.values(results.disc.percentages)),
+    Math.max(...Object.values(results.career.percentages))
+  ];
+  drawRadarChart(doc, pw / 2, y + 32, 28, profileLabels, profileValues, {
+    title: "Overall Profile Snapshot", fillColor: [...BLUE] as [number, number, number]
+  });
+  y += 75;
 
-  y = subTitle(doc, "Key Insight", y);
-  y = para(doc, `Your highest score is ${highest.name} at ${highest.val}%, indicating this is your strongest natural aptitude and primary competitive advantage. Your lowest score is ${lowest.name} at ${lowest.val}%, which represents your primary growth opportunity. Focused development in this area will have the greatest impact on your overall performance and career trajectory.`, MARGIN, y, CONTENT_W);
-  y += 3;
+  y = insightBox(doc, `Key Insight: Your highest quotient is ${highest.name} at ${highest.val}%, your primary competitive advantage. Your growth area is ${lowest.name} at ${lowest.val}%. Focused development here will have the greatest impact.`, y, GREEN);
 
   y = sectionTitle(doc, "Overall Profile Summary", y);
   y = para(doc, `${user.name} is a ${results.disc.dominant} personality, represented by the ${birdName} archetype. In the MBTI framework, they are classified as ${results.mbti.type} (${mbtiInfo?.title || ""}), which means they are ${mbtiInfo?.description?.split(".")[0] || "a unique personality type"}.`, MARGIN, y, CONTENT_W);
   y += 2;
-  y = para(doc, `As a ${results.learningStyle.dominant} learner with strong ${results.intelligence.top2.join(" and ")} intelligence, ${user.name} demonstrates ${results.quotients.EQ >= 70 ? "strong emotional awareness and empathy" : "developing emotional skills that can be enhanced with practice"} (EQ: ${results.quotients.EQ}%) and ${results.quotients.IQ >= 70 ? "solid analytical and problem-solving capability" : "growing analytical ability that benefits from structured training"} (IQ: ${results.quotients.IQ}%).`, MARGIN, y, CONTENT_W);
+  y = para(doc, `As a ${results.learningStyle.dominant} learner with strong ${results.intelligence.top2.join(" and ")} intelligence, ${user.name} demonstrates ${results.quotients.EQ >= 70 ? "strong emotional awareness" : "developing emotional skills"} (EQ: ${results.quotients.EQ}%) and ${results.quotients.IQ >= 70 ? "solid analytical capability" : "growing analytical ability"} (IQ: ${results.quotients.IQ}%).`, MARGIN, y, CONTENT_W);
   y += 2;
-  y = para(doc, `Their Adversity Quotient of ${results.quotients.AQ}% indicates ${results.quotients.AQ >= 70 ? "strong resilience — they handle pressure and setbacks effectively" : "moderate resilience — building stress management skills will improve performance"}. Their Creative Quotient of ${results.quotients.CQ}% shows ${results.quotients.CQ >= 70 ? "high innovation potential — they generate novel solutions and see connections others miss" : "developing creative capacity — regular creative exercises will unlock innovative thinking"}.`, MARGIN, y, CONTENT_W);
-  y += 2;
-  y = para(doc, `Their career aptitude aligns with ${results.career.top2.join(" and ")} domains in the RIASEC model (Holland's Career Theory), suggesting optimal fit for roles such as ${results.career.suggestedRoles.join(", ")}. This alignment combines their personality strengths with market opportunities for maximum career satisfaction.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Their career aptitude aligns with ${results.career.top2.join(" and ")} domains in the RIASEC model, suggesting optimal fit for roles such as ${results.career.suggestedRoles.join(", ")}.`, MARGIN, y, CONTENT_W);
 
   // ====================================================================
-  // SECTION 2: PERSONALITY INTERPRETATION (DISC + MBTI) — 4 pages
+  // SECTION 2: PERSONALITY INTERPRETATION (DISC + MBTI)
   // ====================================================================
   y = forceNewPage(doc);
   addPageHeader(doc, 2, "Personality Interpretation", "DISC Personality + MBTI Deep Analysis");
   y = 36;
 
-  // -- DISC Part --
   y = sectionTitle(doc, "DISC Personality Analysis", y);
-  y = explanation(doc, "DISC is a widely-used behavioral assessment developed from the work of psychologist William Moulton Marston. It measures four behavioral dimensions: D (Dominance) = how you handle problems and assert yourself, I (Influence) = how you interact with and persuade others, S (Steadiness) = your patience, persistence, and supportiveness, C (Compliance) = how you approach rules, procedures, and quality. Each person has a dominant dimension represented by a bird archetype: Eagle (D), Parrot (I), Dove (S), or Owl (C).", y);
+  y = explanation(doc, "DISC is a widely-used behavioral assessment developed from the work of psychologist William Moulton Marston. It measures four behavioral dimensions: D (Dominance) = how you handle problems, I (Influence) = how you interact with others, S (Steadiness) = your patience and supportiveness, C (Compliance) = how you approach rules and quality.", y);
   y += 2;
 
   y = subTitle(doc, `Your DISC Type: ${discKey} — ${results.disc.dominant}`, y);
-  y = para(doc, `You are a ${birdLabel}. ${discKey === "D" ? "Eagles are bold, decisive leaders who take charge. They see the big picture, act fast, and drive results. Your dominant D score means you naturally lead from the front and thrive on challenges." : discKey === "I" ? "Parrots are enthusiastic, social, and persuasive communicators. They energize teams and build connections. Your dominant I score means you naturally inspire and motivate others through your charisma." : discKey === "S" ? "Doves are calm, supportive, and reliable team players. They value harmony and stability. Your dominant S score means you naturally create peaceful, productive environments where people feel safe." : "Owls are analytical, detail-oriented, and quality-focused. They ensure accuracy and thoroughness. Your dominant C score means you naturally maintain high standards and catch errors others miss."}`, MARGIN, y, CONTENT_W);
+  y = para(doc, `You are a ${birdLabel}. ${discKey === "D" ? "Eagles are bold, decisive leaders who take charge and drive results." : discKey === "I" ? "Parrots are enthusiastic, social communicators who energize teams." : discKey === "S" ? "Doves are calm, supportive team players who value harmony." : "Owls are analytical, detail-oriented thinkers who ensure accuracy."}`, MARGIN, y, CONTENT_W);
   y += 3;
 
+  // ★ PIE CHART: DISC Distribution
+  y = ensureSpace(doc, y, 75);
+  const discLabels = ["D (Dominance)", "I (Influence)", "S (Steadiness)", "C (Compliance)"];
+  const discValues = [results.disc.percentages.D, results.disc.percentages.I, results.disc.percentages.S, results.disc.percentages.C];
+  drawPieChart(doc, pw / 4, y + 28, 22, discLabels, discValues, {
+    title: "DISC Distribution",
+    colors: [[239, 68, 68], [245, 158, 11], [34, 197, 94], [59, 130, 246]]
+  });
+
+  // ★ RADAR CHART: DISC Profile alongside pie
+  drawRadarChart(doc, pw * 3 / 4, y + 28, 22, ["D", "I", "S", "C"], discValues, {
+    title: "DISC Radar Profile",
+    fillColor: [...BLUE] as [number, number, number]
+  });
+  y += 72;
+
   y = subTitle(doc, "Why You Are This Type", y);
-  y = para(doc, `Based on your assessment responses, your ${discKey} dimension scored highest at ${results.disc.percentages[discKey]}%. This means your natural behavioral tendency in work and life situations is to ${discKey === "D" ? "take charge, make quick decisions, and drive toward results" : discKey === "I" ? "connect with people, communicate enthusiastically, and build social networks" : discKey === "S" ? "support others, maintain stability, and create harmonious environments" : "analyze carefully, follow procedures, and ensure quality and accuracy"}. This is your authentic behavioral preference — not a limitation, but your natural strength.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Based on your assessment responses, your ${discKey} dimension scored highest at ${results.disc.percentages[discKey]}%. This means your natural behavioral tendency is to ${discKey === "D" ? "take charge, make quick decisions, and drive toward results" : discKey === "I" ? "connect with people, communicate enthusiastically, and build networks" : discKey === "S" ? "support others, maintain stability, and create harmony" : "analyze carefully, follow procedures, and ensure quality"}.`, MARGIN, y, CONTENT_W);
   y += 3;
 
   y = subTitle(doc, "DISC Dimension Scores", y);
   const discExplainFull: Record<string, string> = {
-    D: "Dominance (Eagle) — Measures assertiveness, problem-solving drive, and results orientation. High D individuals are direct, competitive, and action-focused.",
-    I: "Influence (Parrot) — Measures social interaction, persuasion, and enthusiasm. High I individuals are charismatic, optimistic, and relationship-focused.",
-    S: "Steadiness (Dove) — Measures patience, persistence, and supportiveness. High S individuals are calm, loyal, and harmony-focused.",
-    C: "Compliance (Owl) — Measures attention to detail, rules adherence, and quality focus. High C individuals are analytical, precise, and accuracy-focused.",
+    D: "Dominance (Eagle) — Measures assertiveness, problem-solving drive, and results orientation.",
+    I: "Influence (Parrot) — Measures social interaction, persuasion, and enthusiasm.",
+    S: "Steadiness (Dove) — Measures patience, persistence, and supportiveness.",
+    C: "Compliance (Owl) — Measures attention to detail, rules adherence, and quality focus.",
   };
   (["D", "I", "S", "C"] as const).forEach(k => {
     y = progressBar(doc, `${k} (${k === "D" ? "Dominance/Eagle" : k === "I" ? "Influence/Parrot" : k === "S" ? "Steadiness/Dove" : "Compliance/Owl"})`, results.disc.percentages[k], y, 80, k === discKey ? BLUE : GRAY);
@@ -334,39 +386,48 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y += 3;
 
   y = subTitle(doc, "Behaviour Traits — How You Act in Real Life", y);
-  y = bullets(doc, discInfo.traits.map((t, i) => `${t} — This trait manifests in daily interactions through ${i === 0 ? "your natural tendency in group dynamics" : i === 1 ? "how you handle pressure" : i === 2 ? "your decision-making approach" : i === 3 ? "your goal-setting behavior" : "your problem-solving style"}.`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, discInfo.traits.map((t, i) => `${t} — This trait manifests through ${i === 0 ? "your group dynamics" : i === 1 ? "how you handle pressure" : i === 2 ? "your decision-making" : i === 3 ? "your goal-setting" : "your problem-solving"}.`), MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
 
   y = subTitle(doc, "Strengths — Natural Advantages", y);
-  y = bullets(doc, discInfo.strengths.map(s => `${s} — This strength gives you a competitive edge in professional and personal contexts.`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, discInfo.strengths.map(s => `${s} — Gives you a competitive edge professionally.`), MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
 
-  y = subTitle(doc, "Risks & Limitations — Areas to Watch", y);
-  y = bullets(doc, discInfo.risks.map(r => `${r} — Being aware of this tendency helps you manage it proactively.`), MARGIN + 3, y, CONTENT_W - 6);
+  y = subTitle(doc, "Risks & Limitations", y);
+  y = bullets(doc, discInfo.risks.map(r => `${r} — Awareness helps you manage this proactively.`), MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
 
   y = subTitle(doc, "Workplace Fit", y);
   y = para(doc, discInfo.workFit, MARGIN, y, CONTENT_W);
   y += 2;
-  y = para(doc, `As a ${birdName} personality, you thrive in environments that ${discKey === "D" ? "reward initiative, leadership, and results-driven performance. You prefer autonomy and resist micromanagement" : discKey === "I" ? "value creativity, teamwork, and social connection. You need recognition and variety to stay engaged" : discKey === "S" ? "provide stability, clear expectations, and supportive management. You prefer gradual change over sudden disruption" : "value precision, quality, and systematic processes. You prefer working with data and clear standards"}.`, MARGIN, y, CONTENT_W);
 
   // -- MBTI Part --
   y = ensureSpace(doc, y, 60);
   y = divider(doc, y);
   y = sectionTitle(doc, `MBTI Personality: ${results.mbti.type} — ${mbtiInfo?.title || ""}`, y);
-  y = explanation(doc, "MBTI (Myers-Briggs Type Indicator) was developed by Isabel Briggs Myers and Katharine Briggs based on Carl Jung's theory of psychological types. It categorizes personality into 16 types using 4 preference pairs. MBTI helps you understand how you perceive the world and make decisions. It is one of the most widely used personality assessments globally.", y);
+  y = explanation(doc, "MBTI (Myers-Briggs Type Indicator) was developed by Isabel Briggs Myers and Katharine Briggs based on Carl Jung's theory. It categorizes personality into 16 types using 4 preference pairs.", y);
   y += 2;
 
-  y = subTitle(doc, "Your MBTI Dimension Scores", y);
+  // ★ COMPARISON BARS: MBTI Dimensions
+  y = ensureSpace(doc, y, 55);
+  const mbtiPairs = [
+    { labelA: "E (Extraversion)", valA: results.mbti.scores.E, labelB: "I (Introversion)", valB: results.mbti.scores.I },
+    { labelA: "S (Sensing)", valA: results.mbti.scores.S, labelB: "N (Intuition)", valB: results.mbti.scores.N },
+    { labelA: "T (Thinking)", valA: results.mbti.scores.T, labelB: "F (Feeling)", valB: results.mbti.scores.F },
+    { labelA: "J (Judging)", valA: results.mbti.scores.J, labelB: "P (Perceiving)", valB: results.mbti.scores.P },
+  ];
+  y = drawComparisonBars(doc, MARGIN, y, CONTENT_W, mbtiPairs, { title: "MBTI Preference Pairs" });
+  y += 3;
+
   const mbtiFullExplain: Record<string, string> = {
-    E: "E = Extraversion — You gain energy from social interaction and the external world. You think out loud and prefer action.",
-    I: "I = Introversion — You gain energy from solitude and internal reflection. You think before speaking and prefer depth.",
-    S: "S = Sensing — You focus on concrete facts, real-world details, and practical information. You trust experience.",
-    N: "N = Intuition — You focus on patterns, possibilities, and abstract ideas. You trust inspiration and imagination.",
-    T: "T = Thinking — You make decisions based on logic, objective analysis, and consistent principles. You value fairness.",
-    F: "F = Feeling — You make decisions based on personal values and how they affect people. You value harmony.",
-    J: "J = Judging — You prefer structure, planning, and organization. You like things decided and settled.",
-    P: "P = Perceiving — You prefer flexibility, spontaneity, and keeping options open. You adapt as you go.",
+    E: "E = Extraversion — You gain energy from social interaction. You think out loud and prefer action.",
+    I: "I = Introversion — You gain energy from solitude and reflection. You think before speaking.",
+    S: "S = Sensing — You focus on concrete facts and practical information. You trust experience.",
+    N: "N = Intuition — You focus on patterns and possibilities. You trust imagination.",
+    T: "T = Thinking — You decide based on logic and objective analysis.",
+    F: "F = Feeling — You decide based on personal values and how it affects people.",
+    J: "J = Judging — You prefer structure, planning, and organization.",
+    P: "P = Perceiving — You prefer flexibility and keeping options open.",
   };
 
   const pairs = [["E", "I"], ["S", "N"], ["T", "F"], ["J", "P"]] as const;
@@ -375,16 +436,17 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     const aS = results.mbti.scores[a], bS = results.mbti.scores[b];
     const winner = aS >= bS ? a : b;
     doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text(`${a} vs ${b}:  ${a} = ${aS}  |  ${b} = ${bS}  →  You are ${winner}`, MARGIN, y);
-    doc.setFont("helvetica", "normal"); y += 5;
+    const pairText = `${a} vs ${b}:  ${a} = ${aS}  |  ${b} = ${bS}  ->  You are ${winner}`;
+    const pairLines = doc.splitTextToSize(pairText, CONTENT_W);
+    doc.text(pairLines, MARGIN, y);
+    doc.setFont("helvetica", "normal"); y += pairLines.length * 5;
     y = explanation(doc, mbtiFullExplain[a], y);
     y = explanation(doc, mbtiFullExplain[b], y);
-    y = explanation(doc, `You scored higher on ${winner} (${winner === a ? aS : bS} vs ${winner === a ? bS : aS}), which means you naturally ${mbtiFullExplain[winner].split("—")[1]?.trim() || "prefer this dimension"}.`, y);
     y += 2;
   });
 
-  y = subTitle(doc, `Why You Are ${results.mbti.type} (${mbtiInfo?.title || ""})`, y);
-  y = para(doc, `Your MBTI type ${results.mbti.type} is determined by combining your four dominant preferences: ${results.mbti.type.split("").map((l: string) => mbtiFullExplain[l]?.split("—")[0]?.trim()).join(", ")}. Together, these preferences create the "${mbtiInfo?.title || ""}" personality archetype.`, MARGIN, y, CONTENT_W);
+  y = subTitle(doc, `Why You Are ${results.mbti.type}`, y);
+  y = para(doc, `Your MBTI type ${results.mbti.type} is determined by combining your four dominant preferences. Together, these create the "${mbtiInfo?.title || ""}" personality archetype.`, MARGIN, y, CONTENT_W);
   y += 3;
 
   if (mbtiInfo) {
@@ -394,8 +456,6 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
 
     y = subTitle(doc, "Work Style", y);
     y = para(doc, mbtiInfo.workStyle, MARGIN, y, CONTENT_W);
-    y += 2;
-    y = para(doc, `This work style means you ${results.mbti.type.includes("E") ? "thrive in collaborative, people-oriented settings" : "excel in focused, independent work environments"} and ${results.mbti.type.includes("J") ? "prefer structured timelines and clear deliverables" : "prefer flexibility and open-ended exploration"}.`, MARGIN, y, CONTENT_W);
     y += 3;
 
     y = subTitle(doc, "Strengths in Teams", y);
@@ -404,8 +464,6 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
 
     y = subTitle(doc, "Weakness Patterns", y);
     y = para(doc, mbtiInfo.weaknesses, MARGIN, y, CONTENT_W);
-    y += 2;
-    y = para(doc, "Awareness of these patterns is the first step to managing them. Consider seeking feedback from trusted colleagues to identify blind spots.", MARGIN, y, CONTENT_W);
     y += 3;
 
     y = subTitle(doc, "Leadership Style", y);
@@ -417,7 +475,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 3;
 
     y = subTitle(doc, "Ideal Career Directions for " + results.mbti.type, y);
-    y = bullets(doc, mbtiInfo.careers.map(c => `${c} — aligned with your ${results.mbti.type} personality preferences and natural strengths`), MARGIN + 3, y, CONTENT_W - 6);
+    y = bullets(doc, mbtiInfo.careers.map(c => `${c} — aligned with your ${results.mbti.type} personality`), MARGIN + 3, y, CONTENT_W - 6);
   }
 
   // ====================================================================
@@ -428,14 +486,30 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Understanding the Four Quotients", y);
-  y = explanation(doc, "Intelligence is not a single measure. Modern psychology recognizes multiple dimensions of intelligence. The four quotients measured here represent different aspects of cognitive and emotional capability. Together, they provide a comprehensive picture of your mental strengths and growth areas.", y);
+  y = explanation(doc, "Intelligence is not a single measure. Modern psychology recognizes multiple dimensions. The four quotients measured here represent different aspects of cognitive and emotional capability.", y);
   y += 2;
 
+  // ★ GAUGE CHARTS: Four Quotients
+  y = ensureSpace(doc, y, 45);
   y = subTitle(doc, "Quotient Scores at a Glance", y);
-  allScores.forEach(s => { y = progressBar(doc, s.name, s.val, y, 85, s.val >= 70 ? GREEN : s.val >= 50 ? BLUE : RED); });
+  const qColors: (readonly [number, number, number])[] = [BLUE, GREEN, AMBER, PURPLE];
+  allScores.forEach((s, i) => {
+    const gx = MARGIN + 22 + i * 42;
+    drawGauge(doc, gx, y + 18, 15, s.val, s.name.split("(")[0].trim(), [...qColors[i]] as [number, number, number]);
+  });
+  y += 42;
+
+  // ★ RADAR CHART: Quotient Radar
+  y = ensureSpace(doc, y, 75);
+  drawRadarChart(doc, pw / 2, y + 30, 26,
+    ["IQ", "EQ", "AQ", "CQ"],
+    [results.quotients.IQ, results.quotients.EQ, results.quotients.AQ, results.quotients.CQ],
+    { title: "Quotient Radar Profile", fillColor: [...TEAL] as [number, number, number] }
+  );
+  y += 70;
+
+  y = insightBox(doc, `You are a "${highest.val >= 70 ? "high-performer" : "developing thinker"}" with your strongest dimension in ${highest.name} (${highest.val}%). Primary growth area: ${lowest.name} (${lowest.val}%).`, y, BLUE);
   y += 3;
-  y = para(doc, `Key Insight: You are a "${highest.val >= 70 ? "problem-solver" : "developing thinker"}" with your strongest dimension in ${highest.name} (${highest.val}%). Your primary growth area is ${lowest.name} (${lowest.val}%). Focused development here will yield the greatest overall improvement.`, MARGIN, y, CONTENT_W);
-  y += 5;
 
   // Each quotient in detail
   (["IQ", "EQ", "AQ", "CQ"] as const).forEach(q => {
@@ -443,15 +517,15 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     const interp = quotientInterpretations[q](score);
     const fullNames: Record<string, string> = {
       IQ: "Intelligence Quotient — Analytical Ability & Problem-Solving",
-      EQ: "Emotional Quotient — Emotional Awareness & Relationship Handling",
-      AQ: "Adversity Quotient — Ability to Handle Stress, Failure & Change",
-      CQ: "Creative Quotient — Innovation, Imagination & Creative Problem-Solving"
+      EQ: "Emotional Quotient — Emotional Awareness & Relationships",
+      AQ: "Adversity Quotient — Stress, Failure & Change Handling",
+      CQ: "Creative Quotient — Innovation & Creative Problem-Solving"
     };
     const whyMatters: Record<string, string> = {
-      IQ: "IQ measures your capacity for logical reasoning, abstract thinking, and problem-solving. It indicates how quickly you can process complex information, identify patterns, and arrive at solutions. In professional settings, IQ correlates with job performance in analytically demanding roles.",
-      EQ: "EQ measures your ability to recognize, understand, and manage your own emotions, as well as recognize and influence the emotions of others. High EQ is the strongest predictor of leadership effectiveness, team collaboration, and relationship quality in both personal and professional life.",
-      AQ: "AQ measures your resilience — how you respond to adversity, setbacks, and change. It determines whether you see obstacles as threats or opportunities. High AQ individuals bounce back faster from failures, adapt to change more readily, and maintain productivity under pressure.",
-      CQ: "CQ measures your capacity for creative thinking, innovation, and generating novel solutions. It reflects your ability to think outside conventional frameworks, connect disparate ideas, and approach problems from unique angles. CQ is increasingly valued in knowledge-economy roles.",
+      IQ: "IQ measures your capacity for logical reasoning, abstract thinking, and problem-solving. It indicates how quickly you process complex information and identify patterns.",
+      EQ: "EQ measures your ability to recognize, understand, and manage your own emotions, as well as recognize and influence the emotions of others. High EQ is the strongest predictor of leadership effectiveness.",
+      AQ: "AQ measures your resilience — how you respond to adversity, setbacks, and change. It determines whether you see obstacles as threats or opportunities.",
+      CQ: "CQ measures your capacity for creative thinking, innovation, and generating novel solutions. It reflects your ability to think outside conventional frameworks.",
     };
 
     y = ensureSpace(doc, y, 60);
@@ -481,21 +555,31 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Understanding Learning Styles", y);
-  y = explanation(doc, "Learning style theory, based on the VAK model, identifies three primary channels through which people absorb information: Visual (seeing and reading), Auditory (hearing and discussing), and Kinesthetic (touching and doing). While everyone uses all three, your dominant style indicates the channel that is most efficient for you. Understanding this helps you optimize study methods, training approaches, and communication strategies.", y);
+  y = explanation(doc, "Learning style theory, based on the VAK model, identifies three primary channels: Visual (seeing and reading), Auditory (hearing and discussing), and Kinesthetic (touching and doing). Your dominant style indicates the channel most efficient for you.", y);
   y += 2;
 
-  y = subTitle(doc, "Your Learning Style Scores", y);
-  Object.entries(results.learningStyle.percentages).forEach(([k, v]) => {
-    y = progressBar(doc, k, v, y, 85, k === results.learningStyle.dominant ? BLUE : GRAY);
+  // ★ PIE CHART: Learning Style Distribution
+  y = ensureSpace(doc, y, 75);
+  const lsLabels = Object.keys(results.learningStyle.percentages);
+  const lsValues = Object.values(results.learningStyle.percentages);
+  drawPieChart(doc, pw / 4, y + 28, 22, lsLabels, lsValues, {
+    title: "Learning Style Distribution",
+    colors: [[59, 130, 246], [34, 197, 94], [245, 158, 11]]
   });
-  y += 3;
+
+  // ★ RADAR alongside
+  drawRadarChart(doc, pw * 3 / 4, y + 28, 22, lsLabels, lsValues, {
+    title: "Learning Style Radar",
+    fillColor: [...GREEN] as [number, number, number]
+  });
+  y += 72;
 
   y = subTitle(doc, `Your Dominant Style: ${results.learningStyle.dominant}`, y);
-  y = para(doc, `You are primarily a ${results.learningStyle.dominant} learner, scoring ${results.learningStyle.percentages[results.learningStyle.dominant]}% in this dimension. This means ${lsInfo.howLearns}`, MARGIN, y, CONTENT_W);
+  y = para(doc, `You are primarily a ${results.learningStyle.dominant} learner, scoring ${results.learningStyle.percentages[results.learningStyle.dominant]}%. This means ${lsInfo.howLearns}`, MARGIN, y, CONTENT_W);
   y += 3;
 
   y = subTitle(doc, "Why This Matters", y);
-  y = para(doc, `Understanding your learning style is critical because it directly impacts how efficiently you absorb, process, and retain information. When you study or train using methods aligned with your ${results.learningStyle.dominant} preference, you learn faster, remember longer, and perform better. When you use mismatched methods, you waste effort and experience frustration.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Understanding your learning style directly impacts how efficiently you absorb and retain information. When methods align with your ${results.learningStyle.dominant} preference, you learn faster and perform better.`, MARGIN, y, CONTENT_W);
   y += 3;
 
   y = subTitle(doc, `How ${user.name} Learns Best`, y);
@@ -503,25 +587,24 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y += 3;
 
   y = subTitle(doc, "Best Learning Methods for You", y);
-  y = bullets(doc, lsInfo.bestMethods.map(m => `${m} — highly effective for your ${results.learningStyle.dominant} processing style`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, lsInfo.bestMethods.map(m => `${m} — highly effective for your ${results.learningStyle.dominant} style`), MARGIN + 3, y, CONTENT_W - 6);
   y += 3;
 
   y = subTitle(doc, "Methods to Avoid", y);
-  y = bullets(doc, lsInfo.avoid.map(m => `${m} — this approach conflicts with your natural learning preference and reduces retention`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, lsInfo.avoid.map(m => `${m} — conflicts with your natural preference`), MARGIN + 3, y, CONTENT_W - 6);
   y += 3;
 
   y = subTitle(doc, "Practical Techniques for Daily Use", y);
-  y = bullets(doc, lsInfo.techniques.map(t => `${t}`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, lsInfo.techniques, MARGIN + 3, y, CONTENT_W - 6);
   y += 3;
 
-  // Other styles brief
   y = subTitle(doc, "Your Secondary Learning Channels", y);
   const otherStyles = Object.entries(results.learningStyle.percentages).filter(([k]) => k !== results.learningStyle.dominant).sort((a, b) => b[1] - a[1]);
   otherStyles.forEach(([style, pct]) => {
     const info = learningStyleDetails[style];
     y = ensureSpace(doc, y, 20);
     doc.setFont("helvetica", "bold"); doc.text(`${style}: ${pct}%`, MARGIN, y); doc.setFont("helvetica", "normal"); y += 5;
-    y = para(doc, `${info.howLearns} While not your primary channel, incorporating ${style.toLowerCase()} elements can enhance overall learning effectiveness.`, MARGIN, y, CONTENT_W);
+    y = para(doc, `${info.howLearns} Incorporating ${style.toLowerCase()} elements enhances overall learning.`, MARGIN, y, CONTENT_W);
     y += 3;
   });
 
@@ -533,16 +616,27 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Howard Gardner's Theory of Multiple Intelligences", y);
-  y = explanation(doc, "Developed by Harvard psychologist Howard Gardner in 1983, the theory of Multiple Intelligences identifies 8 distinct types of intelligence. Unlike traditional IQ which measures only logical-mathematical ability, this framework recognizes that intelligence is multi-faceted. Every person has all 8 intelligences, but each person's unique profile of strengths creates their competitive advantage and career fit.", y);
+  y = explanation(doc, "Developed by Harvard psychologist Howard Gardner in 1983, this framework identifies 8 distinct types of intelligence beyond traditional IQ. Every person has all 8, but each person's unique profile creates their competitive advantage.", y);
   y += 2;
 
-  y = subTitle(doc, "All Intelligence Scores", y);
+  // ★ HORIZONTAL BAR CHART: All Intelligences
+  y = ensureSpace(doc, y, 85);
   const sortedIntel = Object.entries(results.intelligence.percentages).sort((a, b) => b[1] - a[1]);
-  sortedIntel.forEach(([k, v]) => {
-    const isTop = results.intelligence.top2.includes(k);
-    y = progressBar(doc, k, v, y, 85, isTop ? BLUE : GRAY);
+  const intelLabels = sortedIntel.map(([k]) => k);
+  const intelValues = sortedIntel.map(([, v]) => v);
+  y = drawHBarChart(doc, MARGIN, y, CONTENT_W, intelLabels, intelValues, {
+    title: "Multiple Intelligence Scores",
+    colors: sortedIntel.map(([k]) => results.intelligence.top2.includes(k) ? [...PURPLE] as [number, number, number] : [...GRAY] as [number, number, number])
+  }) || y + 75;
+  y += 5;
+
+  // ★ RADAR CHART: Intelligence Radar
+  y = ensureSpace(doc, y, 75);
+  drawRadarChart(doc, pw / 2, y + 32, 28, intelLabels.slice(0, 8), intelValues.slice(0, 8), {
+    title: "Intelligence Radar Profile",
+    fillColor: [...PURPLE] as [number, number, number]
   });
-  y += 3;
+  y += 75;
 
   y = subTitle(doc, "Your Top Intelligences — Detailed Analysis", y);
   results.intelligence.top2.forEach(intel => {
@@ -564,11 +658,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 2;
 
     y = subSubTitle(doc, "Why This Matters for You", y);
-    y = para(doc, `Your strong ${intel} intelligence (${results.intelligence.percentages[intel]}%) means you have a natural aptitude in this area. Combined with your ${results.learningStyle.dominant} learning style and ${results.mbti.type} personality, this intelligence creates a powerful foundation for career success in ${info.careerRelevance.split(",").slice(0, 2).join(" and ")}.`, MARGIN, y, CONTENT_W);
+    y = para(doc, `Your strong ${intel} intelligence (${results.intelligence.percentages[intel]}%) combined with your ${results.learningStyle.dominant} learning style and ${results.mbti.type} personality creates a powerful foundation for career success.`, MARGIN, y, CONTENT_W);
     y += 4;
   });
 
-  // Other intelligences brief
   y = subTitle(doc, "Other Intelligence Dimensions", y);
   sortedIntel.filter(([k]) => !results.intelligence.top2.includes(k)).forEach(([intel, pct]) => {
     const info = intelligenceDescriptions[intel];
@@ -586,15 +679,27 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Holland's RIASEC Career Theory", y);
-  y = explanation(doc, "Developed by psychologist John Holland, the RIASEC model categorizes both personalities and work environments into 6 types: R = Realistic (hands-on, practical), I = Investigative (research, analytical), A = Artistic (creative, expressive), S = Social (helping, teaching), E = Enterprising (leading, selling), C = Conventional (organizing, systematic). The theory states that people are most satisfied and successful when their personality type matches their work environment.", y);
+  y = explanation(doc, "Developed by psychologist John Holland, the RIASEC model categorizes personalities and work environments into 6 types: R = Realistic (practical), I = Investigative (analytical), A = Artistic (creative), S = Social (helping), E = Enterprising (leading), C = Conventional (organizing).", y);
   y += 2;
 
-  y = subTitle(doc, "Career Type Scores", y);
-  Object.entries(results.career.percentages).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => {
-    const isTop = results.career.top2.includes(k);
-    y = progressBar(doc, k, v, y, 85, isTop ? BLUE : GRAY);
+  // ★ HORIZONTAL BAR CHART: Career Types
+  y = ensureSpace(doc, y, 65);
+  const careerSorted = Object.entries(results.career.percentages).sort((a, b) => b[1] - a[1]);
+  const careerLabels = careerSorted.map(([k]) => k);
+  const careerValues = careerSorted.map(([, v]) => v);
+  y = drawHBarChart(doc, MARGIN, y, CONTENT_W, careerLabels, careerValues, {
+    title: "RIASEC Career Type Scores",
+    colors: careerSorted.map(([k]) => results.career.top2.includes(k) ? [...TEAL] as [number, number, number] : [...GRAY] as [number, number, number])
+  }) || y + 60;
+  y += 3;
+
+  // ★ RADAR CHART: Career Fit Radar
+  y = ensureSpace(doc, y, 75);
+  drawRadarChart(doc, pw / 2, y + 30, 26, careerLabels, careerValues, {
+    title: "Career Fit Radar",
+    fillColor: [...TEAL] as [number, number, number]
   });
-  y += 2;
+  y += 70;
 
   y = subTitle(doc, "Suggested Career Roles", y);
   y = para(doc, `Based on your ${results.career.top2.join(" and ")} career aptitude, combined with your ${results.disc.dominant} personality and ${results.mbti.type} MBTI type, the following roles are recommended: ${results.career.suggestedRoles.join(", ")}.`, MARGIN, y, CONTENT_W);
@@ -611,15 +716,15 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 2;
 
     y = subSubTitle(doc, "Why This Fits You", y);
-    y = para(doc, `Your ${discKey} (${birdName}) DISC personality and ${results.mbti.type} MBTI type align well with ${career} career environments because ${discKey === "D" || discKey === "I" ? "you are action-oriented and people-focused" : "you are detail-oriented and systematic"}, which are valued traits in ${career.toLowerCase()} professions.`, MARGIN, y, CONTENT_W);
+    y = para(doc, `Your ${discKey} (${birdName}) DISC personality and ${results.mbti.type} MBTI type align well with ${career} career environments.`, MARGIN, y, CONTENT_W);
     y += 2;
 
     y = subSubTitle(doc, "Suitable Industries", y);
-    y = bullets(doc, info.industries.map(ind => `${ind} — offers ${career.toLowerCase()} work environments matching your profile`), MARGIN + 3, y, CONTENT_W - 6);
+    y = bullets(doc, info.industries.map(ind => `${ind} — matches your profile`), MARGIN + 3, y, CONTENT_W - 6);
     y += 2;
 
     y = subSubTitle(doc, "Recommended Job Roles", y);
-    y = bullets(doc, info.roles.map(r => `${r}`), MARGIN + 3, y, CONTENT_W - 6);
+    y = bullets(doc, info.roles, MARGIN + 3, y, CONTENT_W - 6);
     y += 2;
 
     y = subSubTitle(doc, "Career Growth Path", y);
@@ -631,18 +736,31 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   // SECTION 7: SWOT ANALYSIS (2 pages)
   // ====================================================================
   y = forceNewPage(doc);
-  addPageHeader(doc, 7, "SWOT Analysis", "Expanded Strengths, Weaknesses, Opportunities & Threats");
+  addPageHeader(doc, 7, "SWOT Analysis", "Strengths, Weaknesses, Opportunities & Threats");
   y = 36;
 
   y = sectionTitle(doc, "Understanding SWOT", y);
-  y = explanation(doc, "SWOT stands for Strengths, Weaknesses, Opportunities, and Threats. Originally a business strategy tool, it is equally powerful for personal development. SWOT helps you understand your current position clearly and create targeted strategies for growth. Strengths and Weaknesses are internal factors (within your control), while Opportunities and Threats are external factors (market conditions, industry trends).", y);
+  y = explanation(doc, "SWOT stands for Strengths, Weaknesses, Opportunities, and Threats. Strengths and Weaknesses are internal factors (within your control), while Opportunities and Threats are external factors.", y);
   y += 3;
 
+  const swotColors: Record<string, readonly [number, number, number]> = {
+    "STRENGTHS": GREEN, "WEAKNESSES": RED, "OPPORTUNITIES": BLUE, "THREATS": AMBER
+  };
+
+  // ★ PIE CHART: SWOT Distribution
+  y = ensureSpace(doc, y, 70);
+  const swotCounts = [results.swot.strengths.length, results.swot.weaknesses.length, results.swot.opportunities.length, results.swot.threats.length];
+  drawPieChart(doc, pw / 2, y + 28, 22, ["Strengths", "Weaknesses", "Opportunities", "Threats"], swotCounts, {
+    title: "SWOT Factor Distribution",
+    colors: [[34, 197, 94], [239, 68, 68], [59, 130, 246], [245, 158, 11]]
+  });
+  y += 68;
+
   const swotData = [
-    { title: "STRENGTHS — Core Competencies & Natural Advantages", items: results.swot.strengths, color: GREEN, detail: "These are your natural advantages — leverage them for career growth and competitive positioning. Each strength represents a capability you can immediately deploy in professional settings." },
-    { title: "WEAKNESSES — Areas Requiring Development", items: results.swot.weaknesses, color: RED, detail: "These areas need focused development. Weaknesses are not permanent limitations — they are growth opportunities. With targeted effort, each weakness can be transformed into a competency." },
-    { title: "OPPORTUNITIES — Actionable Growth Pathways", items: results.swot.opportunities, color: BLUE, detail: "These represent pathways for advancement aligned with your personality, intelligence, and career mapping. Acting on opportunities while they align with market demand creates maximum impact." },
-    { title: "THREATS — Risks to Manage Proactively", items: results.swot.threats, color: AMBER, detail: "These are risks that could undermine your progress if left unaddressed. Awareness is the first step — develop preventive strategies for each threat to maintain steady growth." },
+    { title: "STRENGTHS — Core Competencies", items: results.swot.strengths, color: GREEN, detail: "These are your natural advantages — leverage them for career growth." },
+    { title: "WEAKNESSES — Areas for Development", items: results.swot.weaknesses, color: RED, detail: "These areas need focused development. Weaknesses are growth opportunities." },
+    { title: "OPPORTUNITIES — Growth Pathways", items: results.swot.opportunities, color: BLUE, detail: "Pathways for advancement aligned with your personality and career mapping." },
+    { title: "THREATS — Risks to Manage", items: results.swot.threats, color: AMBER, detail: "Risks that could undermine progress if left unaddressed." },
   ];
 
   swotData.forEach(section => {
@@ -652,16 +770,17 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 2;
     section.items.forEach(item => {
       y = ensureSpace(doc, y, 18);
-      doc.setFont("helvetica", "bold"); doc.text(`•  ${item}`, MARGIN + 3, y); doc.setFont("helvetica", "normal"); y += 5;
-      // Generate expanded explanation for each item
+      const itemLines = doc.splitTextToSize(`•  ${item}`, CONTENT_W - 6);
+      doc.setFont("helvetica", "bold");
+      doc.text(itemLines, MARGIN + 3, y);
+      doc.setFont("helvetica", "normal");
+      y += itemLines.length * 5;
       let itemExplanation = "";
-      if (item.includes("Analytical")) itemExplanation = "Your analytical capability allows you to break down complex problems into manageable components. This skill is valued across industries and positions you for roles requiring strategic thinking.";
-      else if (item.includes("Emotional")) itemExplanation = "Emotional intelligence is the strongest predictor of leadership success. Your ability to read and manage emotions creates trust and collaboration in teams.";
-      else if (item.includes("Creative")) itemExplanation = "Creative thinking enables innovation and fresh approaches. In an increasingly automated world, creativity is one of the most in-demand skills.";
-      else if (item.includes("Resilience") || item.includes("Adaptability")) itemExplanation = "Resilience and adaptability are essential in today's rapidly changing work environments. Your ability to bounce back from setbacks ensures consistent long-term performance.";
-      else if (item.includes("Intelligence")) itemExplanation = `Your ${item} represents a significant cognitive strength that can be leveraged in specialized career paths and professional development.`;
-      else if (item.includes("career") || item.includes("Role")) itemExplanation = `This represents a concrete career opportunity aligned with your personality profile and natural strengths.`;
-      else itemExplanation = `This factor influences your overall development trajectory and should be considered in your personal growth strategy.`;
+      if (item.includes("Analytical")) itemExplanation = "Your analytical capability lets you break down complex problems — highly valued across industries.";
+      else if (item.includes("Emotional")) itemExplanation = "Emotional intelligence is the strongest predictor of leadership success.";
+      else if (item.includes("Creative")) itemExplanation = "Creative thinking enables innovation — one of the most in-demand skills.";
+      else if (item.includes("Resilience") || item.includes("Adaptability")) itemExplanation = "Resilience ensures consistent long-term performance in changing environments.";
+      else itemExplanation = `This factor influences your development trajectory and should be considered in your growth strategy.`;
       y = explanation(doc, itemExplanation, y);
       y += 2;
     });
@@ -676,19 +795,35 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "How Multiple Dimensions Create Your Unique Profile", y);
-  y = explanation(doc, "Individual assessment dimensions tell only part of the story. The real power of personality assessment comes from combining multiple data points to reveal deeper patterns. This section uses the Correlation Engine to link DISC + MBTI + Quotients + Intelligence + Learning Style into a holistic, integrated personality profile.", y);
+  y = explanation(doc, "Individual dimensions tell only part of the story. The real power comes from combining DISC + MBTI + Quotients + Intelligence + Learning Style into a holistic profile.", y);
   y += 3;
+
+  // ★ RADAR CHART: Combined Profile
+  y = ensureSpace(doc, y, 80);
+  const combinedLabels = ["DISC", "MBTI", "IQ", "EQ", "AQ", "CQ", "Learning", "Career"];
+  const combinedValues = [
+    Math.max(...Object.values(results.disc.percentages)),
+    Math.max(...Object.values(results.mbti.scores)),
+    results.quotients.IQ, results.quotients.EQ, results.quotients.AQ, results.quotients.CQ,
+    Math.max(...Object.values(results.learningStyle.percentages)),
+    Math.max(...Object.values(results.career.percentages))
+  ];
+  drawRadarChart(doc, pw / 2, y + 35, 30, combinedLabels, combinedValues, {
+    title: "Combined Profile Radar — All Dimensions",
+    fillColor: [...PURPLE] as [number, number, number]
+  });
+  y += 80;
 
   y = subTitle(doc, "Who You Are — Integrated Personality Portrait", y);
   y = para(doc, corr.whoTheyAre, MARGIN, y, CONTENT_W);
   y += 2;
-  y = para(doc, `This portrait emerges from combining your ${discKey} (${birdName}) DISC personality with your ${results.mbti.type} MBTI type. The ${birdName} archetype provides your behavioral framework, while ${results.mbti.type} adds cognitive and decision-making preferences. Together, they reveal a personality that ${discKey === "D" || discKey === "I" ? "is externally focused, action-oriented, and naturally gravitates toward leadership or social influence" : "is internally focused, reflective, and naturally gravitates toward deep analysis or supportive collaboration"}.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `This portrait emerges from combining your ${discKey} (${birdName}) DISC personality with your ${results.mbti.type} MBTI type.`, MARGIN, y, CONTENT_W);
   y += 4;
 
   y = subTitle(doc, "How You Behave — Behavioural Patterns", y);
   y = para(doc, corr.howTheyBehave, MARGIN, y, CONTENT_W);
   y += 2;
-  y = para(doc, `Your behavioral patterns are further shaped by your Emotional Quotient (EQ: ${results.quotients.EQ}%). ${results.quotients.EQ >= 70 ? "With strong emotional awareness, you naturally read social cues, manage interpersonal dynamics, and maintain productive relationships even under stress." : "As your emotional awareness develops, you'll become increasingly skilled at navigating social dynamics and building stronger professional relationships."}`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Your behavioral patterns are shaped by your EQ (${results.quotients.EQ}%). ${results.quotients.EQ >= 70 ? "With strong emotional awareness, you naturally read social cues and maintain productive relationships." : "As your emotional awareness develops, you'll navigate social dynamics more skillfully."}`, MARGIN, y, CONTENT_W);
   y += 4;
 
   y = subTitle(doc, "Where You Perform Best — Optimal Environments", y);
@@ -697,11 +832,20 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
 
   y = sectionTitle(doc, "Correlation Analysis — Connecting the Dots", y, PURPLE);
 
+  // ★ PIE CHART: Quotient Balance
+  y = ensureSpace(doc, y, 70);
+  drawPieChart(doc, pw / 2, y + 28, 22,
+    ["IQ", "EQ", "AQ", "CQ"],
+    [results.quotients.IQ, results.quotients.EQ, results.quotients.AQ, results.quotients.CQ],
+    { title: "Quotient Balance Distribution", colors: [[59, 130, 246], [34, 197, 94], [245, 158, 11], [139, 92, 246]] }
+  );
+  y += 68;
+
   const correlations = [
-    { title: `DISC (${discKey}/${birdName}) + MBTI (${results.mbti.type}) → Behaviour Insight`, content: `Your ${discKey} personality combined with ${results.mbti.type} creates a ${discKey === "D" ? "driven, strategic" : discKey === "I" ? "enthusiastic, people-oriented" : discKey === "S" ? "supportive, patient" : "analytical, methodical"} behavioral pattern. The ${birdName} archetype (${discKey}) determines HOW you act, while ${results.mbti.type} determines WHY you act that way. This combination means you ${discKey === "D" || discKey === "I" ? "take initiative and lead naturally, expressing your MBTI preferences through action and social engagement" : "process deeply and act deliberately, expressing your MBTI preferences through careful analysis and measured response"}.` },
-    { title: `IQ (${results.quotients.IQ}%) + AQ (${results.quotients.AQ}%) → Work Performance Capability`, content: `IQ measures your analytical power while AQ measures your resilience. Together they determine your work performance under pressure. ${results.quotients.IQ >= 70 && results.quotients.AQ >= 70 ? "With both high IQ and high AQ, you can solve complex problems even in stressful, high-pressure situations. This is a rare and valuable combination." : results.quotients.IQ >= 70 ? "Your strong analytical ability combined with developing resilience means you perform excellently in stable environments but may struggle when under extreme pressure. Building AQ will unlock your full potential." : results.quotients.AQ >= 70 ? "Your strong resilience means you persist through challenges, but developing analytical skills will help you solve problems more efficiently." : "Both areas are developing. Focus on building analytical skills first (structured practice), then gradually increase exposure to challenging situations to build resilience."}` },
-    { title: `Learning Style (${results.learningStyle.dominant}) + Intelligence (${results.intelligence.top2[0]}) → Learning Strategy`, content: `Your ${results.learningStyle.dominant} learning preference combined with ${results.intelligence.top2[0]} intelligence creates an optimized learning channel. This means you absorb information most efficiently when it is presented ${results.learningStyle.dominant === "Visual" ? "visually (diagrams, charts, videos)" : results.learningStyle.dominant === "Auditory" ? "through discussion and verbal explanation" : "through hands-on practice and physical engagement"} AND connected to your ${results.intelligence.top2[0].toLowerCase()} cognitive strengths. Use this insight to select training programs, study methods, and professional development that align with both dimensions.` },
-    { title: `EQ (${results.quotients.EQ}%) + CQ (${results.quotients.CQ}%) → Innovation & Team Potential`, content: `EQ (emotional awareness) and CQ (creative ability) together determine your potential for innovative teamwork. ${results.quotients.EQ >= 70 && results.quotients.CQ >= 70 ? "With both high EQ and CQ, you can generate creative ideas AND communicate them effectively to teams — a combination found in successful innovators and creative leaders." : results.quotients.EQ >= 70 ? "Your strong EQ helps you collaborate effectively, but developing CQ will help you contribute more innovative ideas to team discussions." : results.quotients.CQ >= 70 ? "Your strong creativity generates ideas, but developing EQ will help you sell those ideas and build the relationships needed to implement them." : "Developing both dimensions will significantly enhance your professional impact. Start with EQ (emotional journaling) while incorporating creative exercises."}` },
+    { title: `DISC (${discKey}/${birdName}) + MBTI (${results.mbti.type})`, content: `Your ${discKey} personality combined with ${results.mbti.type} creates a ${discKey === "D" ? "driven, strategic" : discKey === "I" ? "enthusiastic, people-oriented" : discKey === "S" ? "supportive, patient" : "analytical, methodical"} behavioral pattern.` },
+    { title: `IQ (${results.quotients.IQ}%) + AQ (${results.quotients.AQ}%) -> Performance`, content: `IQ measures analytical power while AQ measures resilience. Together they determine work performance under pressure. ${results.quotients.IQ >= 70 && results.quotients.AQ >= 70 ? "With both high, you can solve complex problems even under stress." : "Developing the weaker dimension will unlock your full potential."}` },
+    { title: `Learning (${results.learningStyle.dominant}) + Intelligence (${results.intelligence.top2[0]})`, content: `Your ${results.learningStyle.dominant} learning preference combined with ${results.intelligence.top2[0]} intelligence creates an optimized learning channel for maximum efficiency.` },
+    { title: `EQ (${results.quotients.EQ}%) + CQ (${results.quotients.CQ}%) -> Innovation`, content: `EQ and CQ together determine your innovative teamwork potential. ${results.quotients.EQ >= 70 && results.quotients.CQ >= 70 ? "With both high, you generate creative ideas AND communicate them effectively." : "Developing both will significantly enhance your professional impact."}` },
   ];
 
   correlations.forEach(c => {
@@ -712,8 +856,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   });
 
   y = ensureSpace(doc, y, 25);
-  y = subTitle(doc, "Final Integrated Insight", y);
-  y = para(doc, `${user.name} is a ${results.disc.dominant.split("(")[0].trim().toLowerCase()} personality with ${results.mbti.type} (${mbtiInfo?.title || ""}) cognitive preferences. They demonstrate ${results.quotients.AQ >= 70 ? "strong resilience and adaptability" : "developing resilience"} combined with ${results.quotients.EQ >= 70 ? "high emotional intelligence" : "growing emotional awareness"}. Their ${results.learningStyle.dominant} learning style and ${results.intelligence.top2[0]} intelligence create a natural aptitude for ${results.career.top2.join(" and ")} career environments. Key growth area: ${lowest.name} development, which will have the greatest impact on overall performance.`, MARGIN, y, CONTENT_W);
+  y = insightBox(doc, `${user.name} is a ${results.disc.dominant.split("(")[0].trim().toLowerCase()} personality with ${results.mbti.type} (${mbtiInfo?.title || ""}) cognitive preferences. Their ${results.learningStyle.dominant} style and ${results.intelligence.top2[0]} intelligence position them for ${results.career.top2.join(" and ")} careers. Growth focus: ${lowest.name}.`, y, PURPLE);
 
   // ====================================================================
   // SECTION 9: ACTION PLAN (2 pages)
@@ -723,34 +866,41 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Personalized Development Strategy", y);
-  y = explanation(doc, "This action plan is generated by the Recommendation Engine based on your lowest scores, personality gaps, and career alignment. Each recommendation is specific, measurable, and designed for immediate implementation.", y);
+  y = explanation(doc, "This action plan is generated based on your lowest scores, personality gaps, and career alignment. Each recommendation is specific, measurable, and designed for immediate implementation.", y);
   y += 3;
 
+  // ★ RADAR: Current vs Target
+  y = ensureSpace(doc, y, 80);
+  const targetVals = allScores.map(s => Math.min(100, s.val + 15));
+  drawRadarChart(doc, pw / 4, y + 30, 24,
+    ["IQ", "EQ", "AQ", "CQ"], allScores.map(s => s.val),
+    { title: "Current Scores", fillColor: [...BLUE] as [number, number, number] }
+  );
+  drawRadarChart(doc, pw * 3 / 4, y + 30, 24,
+    ["IQ", "EQ", "AQ", "CQ"], targetVals,
+    { title: "Target Scores (+15%)", fillColor: [...GREEN] as [number, number, number] }
+  );
+  y += 75;
+
   y = sectionTitle(doc, "Skill Development Plan", y, GREEN);
-  y = para(doc, "Based on your assessment results, the following skills have been identified as highest-priority development areas:", MARGIN, y, CONTENT_W);
+  y = bullets(doc, plan.skillDev, MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
-  y = bullets(doc, plan.skillDev.map(s => `${s}`), MARGIN + 3, y, CONTENT_W - 6);
-  y += 2;
-  y = para(doc, `As a ${results.learningStyle.dominant} learner, you should pursue these skills using ${results.learningStyle.dominant === "Visual" ? "video courses, visual tutorials, and diagram-based learning" : results.learningStyle.dominant === "Auditory" ? "podcasts, discussion groups, and verbal coaching" : "hands-on workshops, simulations, and practical projects"} for maximum retention and application.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `As a ${results.learningStyle.dominant} learner, pursue these skills using ${results.learningStyle.dominant === "Visual" ? "video courses and visual tutorials" : results.learningStyle.dominant === "Auditory" ? "podcasts and discussion groups" : "hands-on workshops and practical projects"}.`, MARGIN, y, CONTENT_W);
   y += 5;
 
   y = sectionTitle(doc, "Daily Improvement Plan", y, BLUE);
-  y = para(doc, "Consistent daily habits create compound growth. Follow this structured daily routine:", MARGIN, y, CONTENT_W);
-  y += 2;
   y = bullets(doc, plan.dailyPlan, MARGIN + 3, y, CONTENT_W - 6);
   y += 5;
 
   y = sectionTitle(doc, "Behaviour Improvement Plan", y, PURPLE);
-  y = para(doc, "Behavioral changes require awareness and deliberate practice. Focus on these areas:", MARGIN, y, CONTENT_W);
-  y += 2;
   y = bullets(doc, plan.behaviourPlan, MARGIN + 3, y, CONTENT_W - 6);
   y += 5;
 
   y = sectionTitle(doc, "Career Development Strategy", y, TEAL);
   y = subTitle(doc, "Short-Term Actions (Next 3-6 Months)", y);
   y = bullets(doc, [
-    `Identify 3-5 ${results.career.top2[0]} roles in your target industry and study their requirements`,
-    `Build a portfolio or track record demonstrating your ${results.intelligence.top2[0]} intelligence`,
+    `Identify 3-5 ${results.career.top2[0]} roles in your target industry`,
+    `Build a portfolio demonstrating your ${results.intelligence.top2[0]} intelligence`,
     `Seek mentorship from someone in a ${results.career.suggestedRoles[0]} role`,
     `Complete one certification aligned with ${results.career.top2[0]} career path`,
     `Practice ${lowest.name.split("(")[0].trim()} improvement exercises daily`,
@@ -766,8 +916,8 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   ], MARGIN + 3, y, CONTENT_W - 6);
   y += 3;
 
-  y = subTitle(doc, "Personalized Recommendations Based on Your Profile", y);
-  y = para(doc, `Given your ${results.disc.dominant} personality and ${results.mbti.type} type, your most effective development approach is ${results.mbti.type.includes("E") ? "social and collaborative — join groups, attend networking events, and learn through discussion" : "structured and self-directed — use online courses, books, and focused independent study"}. Your ${results.learningStyle.dominant} learning style means you should ${results.learningStyle.dominant === "Visual" ? "prioritize visual learning resources and create visual summaries of your progress" : results.learningStyle.dominant === "Auditory" ? "use podcasts, audiobooks, and find a study partner or mentor for regular discussions" : "seek hands-on projects, internships, and practical application opportunities"}.`, MARGIN, y, CONTENT_W);
+  y = subTitle(doc, "Personalized Recommendations", y);
+  y = para(doc, `Given your ${results.disc.dominant} personality and ${results.mbti.type} type, your most effective development approach is ${results.mbti.type.includes("E") ? "social and collaborative — join groups and learn through discussion" : "structured and self-directed — use online courses and focused study"}.`, MARGIN, y, CONTENT_W);
 
   // ====================================================================
   // SECTION 10: CAREER ROADMAP (2 pages)
@@ -777,13 +927,22 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = 36;
 
   y = sectionTitle(doc, "Your Personalized Career Trajectory", y);
-  y = explanation(doc, "This career roadmap is generated by combining your RIASEC career mapping, DISC personality, MBTI type, intelligence profile, and quotient scores. It provides a structured pathway from your current position to long-term career success.", y);
+  y = explanation(doc, "This career roadmap combines your RIASEC mapping, DISC personality, MBTI type, intelligence profile, and quotient scores into a structured pathway.", y);
   y += 3;
 
+  // ★ HORIZONTAL BAR: Career Fit Ranking
+  y = ensureSpace(doc, y, 55);
+  y = drawHBarChart(doc, MARGIN, y, CONTENT_W,
+    results.career.suggestedRoles.slice(0, 5),
+    results.career.suggestedRoles.slice(0, 5).map((_, i) => 95 - i * 8),
+    { title: "Career Role Fit Ranking", colors: [[20, 184, 166], [59, 130, 246], [139, 92, 246], [34, 197, 94], [245, 158, 11]] }
+  ) || y + 50;
+  y += 5;
+
   y = sectionTitle(doc, "Phase 1: Foundation (0-2 Years)", y, GREEN);
-  y = bullets(doc, roadmap.shortTerm.map(s => `${s}`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, roadmap.shortTerm, MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
-  y = para(doc, `During this phase, focus on building foundational skills in ${results.career.top2[0]} while exploring ${results.career.top2[1]} opportunities. Your ${results.learningStyle.dominant} learning style will help you absorb industry knowledge efficiently. Leverage your ${results.intelligence.top2[0]} intelligence as your primary competitive advantage.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Focus on building foundational skills in ${results.career.top2[0]} while exploring ${results.career.top2[1]}. Leverage your ${results.intelligence.top2[0]} intelligence as your competitive advantage.`, MARGIN, y, CONTENT_W);
   y += 5;
 
   y = sectionTitle(doc, "Phase 2: Growth (2-5 Years)", y, BLUE);
@@ -792,34 +951,44 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     `Develop cross-functional skills combining ${results.career.top2[0]} and ${results.career.top2[1]}`,
     `Build leadership capabilities aligned with your ${results.mbti.type} personality`,
     `Create a personal brand as a ${results.intelligence.top2[0]}-focused professional`,
-    `Seek project leadership opportunities to demonstrate your ${birdName} qualities`,
+    `Seek project leadership to demonstrate your ${birdName} qualities`,
   ], MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
-  y = para(doc, `In this phase, your ${discKey} personality will be your greatest asset. As a ${birdName}, you naturally ${discKey === "D" ? "drive results and lead teams" : discKey === "I" ? "build relationships and inspire others" : discKey === "S" ? "create stability and support team growth" : "ensure quality and optimize processes"}. Use this to establish yourself as a valued contributor and emerging leader.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Your ${discKey} personality will be your greatest asset. As a ${birdName}, you naturally ${discKey === "D" ? "drive results and lead teams" : discKey === "I" ? "build relationships and inspire others" : discKey === "S" ? "create stability and support team growth" : "ensure quality and optimize processes"}.`, MARGIN, y, CONTENT_W);
   y += 5;
 
   y = sectionTitle(doc, "Phase 3: Leadership (5-10 Years)", y, PURPLE);
-  y = bullets(doc, roadmap.longTerm.map(s => `${s}`), MARGIN + 3, y, CONTENT_W - 6);
+  y = bullets(doc, roadmap.longTerm, MARGIN + 3, y, CONTENT_W - 6);
   y += 2;
-  y = para(doc, `Long-term, your combination of ${results.disc.dominant} personality, ${results.mbti.type} cognitive style, and ${results.intelligence.top2.join("/")} intelligence positions you for senior roles in ${results.career.top2.join(" or ")} domains. Consider ${results.mbti.type.includes("E") ? "executive leadership, consulting, or entrepreneurship" : "technical leadership, research direction, or specialized consulting"}.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Long-term, your combination of ${results.disc.dominant} personality, ${results.mbti.type} cognitive style, and ${results.intelligence.top2.join("/")} intelligence positions you for senior roles in ${results.career.top2.join(" or ")} domains.`, MARGIN, y, CONTENT_W);
   y += 5;
 
   y = sectionTitle(doc, "Industry Path", y, TEAL);
   y = para(doc, roadmap.industryPath, MARGIN, y, CONTENT_W);
   y += 3;
-  y = para(doc, `Given the current market trends and your personality-career alignment, the most promising industries for your profile include: ${careerTypeDetails[results.career.top2[0]]?.industries?.slice(0, 3).join(", ")} (from your ${results.career.top2[0]} aptitude) and ${careerTypeDetails[results.career.top2[1]]?.industries?.slice(0, 3).join(", ")} (from your ${results.career.top2[1]} aptitude). These industries value the combination of ${results.intelligence.top2[0]} intelligence and ${results.disc.dominant.split("(")[0].trim()} personality traits.`, MARGIN, y, CONTENT_W);
+  y = para(doc, `Most promising industries: ${careerTypeDetails[results.career.top2[0]]?.industries?.slice(0, 3).join(", ")} and ${careerTypeDetails[results.career.top2[1]]?.industries?.slice(0, 3).join(", ")}.`, MARGIN, y, CONTENT_W);
   y += 5;
 
   // Brain Dominance for employees
   if (user.role === "employee") {
     y = ensureSpace(doc, y, 30);
     y = sectionTitle(doc, "Brain Dominance Analysis", y);
+
+    // ★ PIE CHART: Brain Dominance
+    y = ensureSpace(doc, y, 70);
+    drawPieChart(doc, pw / 2, y + 25, 20,
+      ["Left Brain (Logical)", "Right Brain (Creative)"],
+      [results.brainDominance.left, results.brainDominance.right],
+      { title: "Brain Hemisphere Dominance", colors: [[59, 130, 246], [236, 72, 153]] }
+    );
+    y += 60;
+
     y = boldLabel(doc, "Left Brain (Logical): ", `${results.brainDominance.left}%`, y);
     y = boldLabel(doc, "Right Brain (Creative): ", `${results.brainDominance.right}%`, y);
     y += 2;
     y = para(doc, results.brainDominance.left > results.brainDominance.right
-      ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical, and systematic thinking. This aligns with your ${results.intelligence.top2.includes("Logical") ? "strong Logical intelligence" : "analytical tendencies"} and supports career paths in ${results.career.top2[0]}.`
-      : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive, and artistic thinking. This aligns with your ${results.intelligence.top2.includes("Musical") || results.intelligence.top2.includes("Spatial") ? "creative intelligences" : "innovative tendencies"} and supports career paths requiring imagination and vision.`, MARGIN, y, CONTENT_W);
+      ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical thinking.`
+      : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive thinking.`, MARGIN, y, CONTENT_W);
   }
 
   // ====================================================================
@@ -864,7 +1033,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     `Pursue ${results.career.top2.join(" and ")} career paths for optimal fit`,
   ];
   takeaways.forEach(t => {
-    const lines = doc.splitTextToSize(`✓  ${t}`, pw - 50);
+    const lines = doc.splitTextToSize(`>  ${t}`, pw - 50);
     doc.text(lines, pw / 2, sy, { align: "center" }); sy += lines.length * 6;
   });
 
@@ -876,7 +1045,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
 
   doc.setFont("helvetica", "normal"); doc.setFontSize(9);
   doc.text("This report was generated by Perfy's Deep Interpretation System", pw / 2, sy, { align: "center" }); sy += 5;
-  doc.text("Powered by Interpretation Engine • Correlation Engine • Recommendation Engine", pw / 2, sy, { align: "center" });
+  doc.text("Powered by Interpretation Engine, Correlation Engine & Recommendation Engine", pw / 2, sy, { align: "center" });
 
   doc.setTextColor(0, 0, 0);
 
