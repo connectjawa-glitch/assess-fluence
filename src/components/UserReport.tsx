@@ -16,12 +16,8 @@ import {
 import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
-const GRADIENT_COLORS = {
-  blue: "from-blue-500/10 to-indigo-500/10",
-  green: "from-emerald-500/10 to-teal-500/10",
-  purple: "from-purple-500/10 to-pink-500/10",
-  amber: "from-amber-500/10 to-orange-500/10",
-};
+
+
 
 const birdIcons: Record<string, string> = { Eagle: "🦅", Parrot: "🦜", Dove: "🕊️", Owl: "🦉" };
 
@@ -423,7 +419,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
             {(["IQ", "EQ", "AQ", "CQ"] as const).map((q, i) => {
               const interp = quotientInterpretations[q](results.quotients[q]);
               const icons = ["💡", "❤️", "⚡", "🎨"];
-              const accents = ["blue", "green", "purple", "amber"] as const;
+              const _accents = ["blue", "green", "purple", "amber"] as const;
               return (
                 <div key={q} className="p-5 rounded-xl border bg-gradient-to-r from-muted/30 to-background">
                   <div className="flex items-center gap-3 mb-3">
