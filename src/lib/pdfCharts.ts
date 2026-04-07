@@ -27,7 +27,6 @@ export function drawRadarChart(
   if (n < 3) return;
   const maxVal = options?.maxVal || 100;
   const fill = options?.fillColor || [59, 130, 246];
-  const stroke = options?.strokeColor || [30, 41, 59];
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -70,11 +69,17 @@ export function drawRadarChart(
   }
 
   // Fill polygon manually using triangles from center
+  // Fill polygon with semi-transparent color
   doc.setFillColor(fill[0], fill[1], fill[2]);
-  doc.setGState(new doc.GState({ opacity: 0.25 }));
+  // Use lower opacity via lighter color approximation
+  const lightFill: RGB = [
+    Math.round(fill[0] * 0.25 + 255 * 0.75),
+    Math.round(fill[1] * 0.25 + 255 * 0.75),
+    Math.round(fill[2] * 0.25 + 255 * 0.75),
+  ];
+  doc.setFillColor(lightFill[0], lightFill[1], lightFill[2]);
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
-    const triangle = new Float32Array([cx, cy, dataPoints[i][0], dataPoints[i][1], dataPoints[j][0], dataPoints[j][1]]);
     doc.triangle(
       cx, cy,
       dataPoints[i][0], dataPoints[i][1],
@@ -82,7 +87,6 @@ export function drawRadarChart(
       "F"
     );
   }
-  doc.setGState(new doc.GState({ opacity: 1 }));
 
   // Stroke polygon
   doc.setDrawColor(fill[0], fill[1], fill[2]); doc.setLineWidth(0.8);
