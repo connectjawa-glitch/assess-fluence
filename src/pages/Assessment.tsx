@@ -244,7 +244,7 @@ export default function AssessmentPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-[300px_1fr] gap-6">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-[300px_1fr] gap-6">
         {/* LEFT — Brain visual */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card className="shadow-elevated border-0 overflow-hidden">
