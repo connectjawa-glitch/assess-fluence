@@ -222,12 +222,13 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.setFontSize(10);
   doc.text(`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`, pw / 2, 160, { align: "center" });
 
-  // Quotient gauges on cover
-  const gaugeY = 190;
+  // Quotient gauges on cover — evenly distributed across the printable width.
+  const gaugeY = 188;
   const gaugeColors: (readonly [number, number, number])[] = [BLUE, GREEN, AMBER, PURPLE];
+  const gaugeStep = CONTENT_W / 4;
   allScores.forEach((s, i) => {
-    const gx = MARGIN + 22 + i * 44;
-    drawGauge(doc, gx, gaugeY, 14, s.val, s.name.split("(")[0].trim(), [...gaugeColors[i]] as [number, number, number]);
+    const gx = MARGIN + gaugeStep / 2 + i * gaugeStep;
+    drawGauge(doc, gx, gaugeY, 13, s.val, s.name.split("(")[0].trim(), [...gaugeColors[i]] as [number, number, number]);
   });
 
   doc.setFontSize(9);
@@ -235,11 +236,11 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     `DISC: ${discKey} (${birdName})`, `MBTI: ${results.mbti.type}`,
     `Style: ${results.learningStyle.dominant}`, `Career: ${results.career.top2.join(" & ")}`
   ];
-  doc.text(quickStats.join("   •   "), pw / 2, 220, { align: "center", maxWidth: pw - 30 });
+  doc.text(quickStats.join("   •   "), pw / 2, 222, { align: "center", maxWidth: pw - 30 });
 
   doc.setFontSize(8);
-  doc.text("This report contains 10 detailed sections across 20+ pages", pw / 2, PH - 30, { align: "center" });
-  doc.text("Data -> Meaning -> Insight -> Action", pw / 2, PH - 24, { align: "center" });
+  doc.text("This report contains 10 detailed sections across 20+ pages", pw / 2, PH - 38, { align: "center" });
+  doc.text("Data  ->  Meaning  ->  Insight  ->  Action", pw / 2, PH - 32, { align: "center" });
   doc.setTextColor(0, 0, 0);
 
   // ====================================================================
