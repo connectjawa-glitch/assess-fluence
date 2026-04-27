@@ -193,7 +193,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
               {showBackButton && onBack && (
                 <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl"><ArrowLeft className="w-4 h-4" /></Button>
               )}
-              <img src={perfyLogo} alt="Perfy" className="h-14 w-14 rounded-xl shadow-lg object-cover ring-2 ring-primary/20" />
+              <BrainLogo size={56} />
               <div>
                 <h2 className="text-2xl font-bold text-foreground tracking-tight">{targetUser.name}</h2>
                 <p className="text-sm text-muted-foreground capitalize flex items-center gap-1.5">
@@ -207,8 +207,9 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={handlePrint} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
-              <Button size="sm" onClick={() => generateDeepReport(targetUser, results)} className="rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <Download className="w-4 h-4 mr-1.5" /> Download PDF
+              <Button size="sm" onClick={handleDownloadClick} className="rounded-xl gradient-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
+                {canDownload ? <Download className="w-4 h-4 mr-1.5" /> : <Lock className="w-4 h-4 mr-1.5" />}
+                {canDownload ? "Download PDF" : "Download Detailed Report"}
               </Button>
             </div>
           </div>
