@@ -969,27 +969,25 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = para(doc, `Most promising industries: ${careerTypeDetails[results.career.top2[0]]?.industries?.slice(0, 3).join(", ")} and ${careerTypeDetails[results.career.top2[1]]?.industries?.slice(0, 3).join(", ")}.`, MARGIN, y, CONTENT_W);
   y += 5;
 
-  // Brain Dominance for employees
-  if (user.role === "employee") {
-    y = ensureSpace(doc, y, 30);
-    y = sectionTitle(doc, "Brain Dominance Analysis", y);
+  // Brain Dominance for ALL users
+  y = ensureSpace(doc, y, 30);
+  y = sectionTitle(doc, "Brain Dominance Analysis", y);
 
-    // ★ PIE CHART: Brain Dominance
-    y = ensureSpace(doc, y, 70);
-    drawPieChart(doc, pw / 2, y + 25, 20,
-      ["Left Brain (Logical)", "Right Brain (Creative)"],
-      [results.brainDominance.left, results.brainDominance.right],
-      { title: "Brain Hemisphere Dominance", colors: [[59, 130, 246], [236, 72, 153]] }
-    );
-    y += 60;
+  // ★ PIE CHART: Brain Dominance
+  y = ensureSpace(doc, y, 70);
+  drawPieChart(doc, pw / 2, y + 25, 20,
+    ["Left Brain (Logical)", "Right Brain (Creative)"],
+    [results.brainDominance.left, results.brainDominance.right],
+    { title: "Brain Hemisphere Dominance", colors: [[59, 130, 246], [236, 72, 153]] }
+  );
+  y += 60;
 
-    y = boldLabel(doc, "Left Brain (Logical): ", `${results.brainDominance.left}%`, y);
-    y = boldLabel(doc, "Right Brain (Creative): ", `${results.brainDominance.right}%`, y);
-    y += 2;
-    y = para(doc, results.brainDominance.left > results.brainDominance.right
-      ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical thinking.`
-      : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive thinking.`, MARGIN, y, CONTENT_W);
-  }
+  y = boldLabel(doc, "Left Brain (Logical): ", `${results.brainDominance.left}%`, y);
+  y = boldLabel(doc, "Right Brain (Creative): ", `${results.brainDominance.right}%`, y);
+  y += 2;
+  y = para(doc, results.brainDominance.left > results.brainDominance.right
+    ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical thinking.`
+    : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive thinking.`, MARGIN, y, CONTENT_W);
 
   // ====================================================================
   // FINAL PAGE — CONCLUSION
