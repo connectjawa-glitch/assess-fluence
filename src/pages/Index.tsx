@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, Zap, ArrowRight, Crown } from "lucide-react";
+import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, ArrowRight, Crown } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { BrainLogo } from "@/components/BrainLogo";
 
@@ -20,6 +20,16 @@ const taglines = [
   "Could you lead like Alexander the Great?",
   "Discover the ruler within — your hidden archetype awaits.",
   "Left-brain logic vs Right-brain magic — which wins in you?",
+];
+
+// Famous personalities — used as a "Which legend matches you?" teaser strip on the home page.
+const archetypes = [
+  { emoji: "🚀", name: "Elon Musk",        type: "INTJ — Visionary Strategist",     accent: "from-cyan-500/20 to-blue-500/10",     ring: "ring-cyan-400/40" },
+  { emoji: "👑", name: "Alexander the Great", type: "Eagle (D) — Bold Ruler",        accent: "from-violet-500/20 to-fuchsia-500/10", ring: "ring-violet-400/40" },
+  { emoji: "🎨", name: "Leonardo da Vinci", type: "Polymath — All 8 Intelligences",  accent: "from-fuchsia-500/20 to-purple-500/10", ring: "ring-fuchsia-400/40" },
+  { emoji: "🧪", name: "Albert Einstein",   type: "INTP — Eternal Learner",          accent: "from-emerald-500/20 to-teal-500/10",   ring: "ring-emerald-400/40" },
+  { emoji: "💎", name: "Oprah Winfrey",     type: "ENFJ — Emotional Conductor",      accent: "from-amber-500/20 to-orange-500/10",   ring: "ring-amber-400/40" },
+  { emoji: "🍎", name: "Steve Jobs",        type: "ENTJ — Creative Commander",       accent: "from-rose-500/20 to-pink-500/10",      ring: "ring-rose-400/40" },
 ];
 
 const testimonials = [
@@ -75,6 +85,34 @@ export default function Index() {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Famous personality archetypes — "Which legend matches you?" */}
+      <div className="max-w-6xl mx-auto px-4 pt-12 pb-2">
+        <div className="text-center mb-6">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-2">Which legend lives in you?</p>
+          <h2 className="text-2xl md:text-3xl font-display font-bold">
+            Your <span className="text-gradient">archetype</span> awaits
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
+            Every result maps you to a famous personality — discover whether you think like Musk, lead like Alexander, or create like Da Vinci.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {archetypes.map((a, i) => (
+            <Card
+              key={a.name}
+              className={`shadow-card hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in ring-1 ${a.ring}`}
+              style={{ animationDelay: `${i * 70}ms` }}
+            >
+              <CardContent className={`p-4 flex flex-col items-center text-center bg-gradient-to-br ${a.accent} rounded-lg`}>
+                <span className="text-3xl mb-2" aria-hidden>{a.emoji}</span>
+                <p className="text-sm font-display font-bold leading-tight">{a.name}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{a.type}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 

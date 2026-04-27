@@ -49,15 +49,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Sync src
+  // Sync src — when track changes, swap source and resume if we were playing.
+  // Listen for `storage` events too so admin uploads in another tab propagate.
   useEffect(() => {
     if (!audioRef.current) return;
     if (audioRef.current.src !== currentSrc) {
       const wasPlaying = playing;
       audioRef.current.src = currentSrc;
+      audioRef.current.load();
       if (wasPlaying) audioRef.current.play().catch(() => {});
     }
   }, [currentSrc, playing]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) {
+        const next = e.newValue || DEFAULT_TRACK;
+        setCurrentSrc(next);
+        setTrackName(e.newValue ? localStorage.getItem("pia_music_name") || "Custom track" : "Default ambient");
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // Sync volume / muted
   useEffect(() => {
@@ -71,8 +85,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!a) return;
     a.volume = volume;
     a.muted = muted;
-    if (!a.src) a.src = currentSrc;
-    const p = a.play();
+    if (!a.src || a.src !== currentSrc) {
+      a.src = currentSrc;
+      a.load();
+    }
+    const tryPlay = () => a.play();
+    const p = tryPlay();
     if (p && typeof p.then === "function") {
       p.then(() => setPlaying(true)).catch(() => {
         // Autoplay was blocked. Try once more muted so the audio element is "primed",
@@ -82,11 +100,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           setPlaying(true);
           const unlock = () => {
             a.muted = muted;
+            // Try again unmuted in case the muted attempt didn't actually start
+            a.play().catch(() => {});
             window.removeEventListener("pointerdown", unlock);
             window.removeEventListener("keydown", unlock);
+            window.removeEventListener("touchstart", unlock);
           };
           window.addEventListener("pointerdown", unlock, { once: true });
           window.addEventListener("keydown", unlock, { once: true });
+          window.addEventListener("touchstart", unlock, { once: true });
         }).catch(() => setPlaying(false));
       });
     }

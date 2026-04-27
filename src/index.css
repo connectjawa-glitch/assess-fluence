@@ -131,9 +131,16 @@
   .animate-blob-b { animation: blob-drift-b 22s ease-in-out infinite; will-change: transform; }
   .animate-blob-c { animation: blob-drift-c 26s ease-in-out infinite; will-change: transform; }
 
+  /* Soft "breathing" for the anatomical brain */
+  @keyframes brain-breath {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.025); }
+  }
+
   /* Mobile + reduced-motion users: drop expensive looping animations entirely
      so the page stays smooth and the battery stays alive. */
   @media (prefers-reduced-motion: reduce) {
     .animate-blob-a, .animate-blob-b, .animate-blob-c { animation: none !important; }
+    svg { animation: none !important; }
   }
 }

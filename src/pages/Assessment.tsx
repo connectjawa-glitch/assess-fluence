@@ -156,10 +156,10 @@ export default function AssessmentPage() {
     setResponses(updated);
     localStorage.setItem(`mm_responses_${user.id}`, JSON.stringify(updated));
 
-    // Encouragement popup every 5 newly-answered questions, max once per 8s.
+    // Encouragement popup roughly every 3 newly-answered questions, throttled to 6s.
     const answeredCount = Object.keys(updated).length;
     const now = Date.now();
-    if (answeredCount > 0 && answeredCount % 5 === 0 && now - lastCheerRef.current > 8000) {
+    if (answeredCount > 0 && answeredCount % 3 === 0 && now - lastCheerRef.current > 6000) {
       const cheer = cheers[cheerIdxRef.current % cheers.length];
       cheerIdxRef.current += 1;
       lastCheerRef.current = now;

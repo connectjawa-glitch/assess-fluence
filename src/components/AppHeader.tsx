@@ -40,25 +40,25 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
           <Button
             variant="outline"
             size="sm"
-            className="hover:scale-105 transition-transform shrink-0"
+            className="hover:scale-105 transition-transform shrink-0 gap-1.5"
             onClick={() => navigate("/pricing")}
             aria-current={pathname === "/pricing"}
           >
-            <Sparkles className="w-4 h-4 sm:mr-1" />
-            <span className="hidden sm:inline">View Plans</span>
+            <Sparkles className="w-4 h-4" />
+            <span className="text-xs sm:text-sm">View Plans</span>
           </Button>
 
           {showDashboard && (
             <Button
               variant="outline"
               size="sm"
-              className="hover:scale-105 transition-transform shrink-0"
+              className="hover:scale-105 transition-transform shrink-0 gap-1.5"
               onClick={() =>
                 navigate(user.role === "admin" ? "/admin" : "/dashboard")
               }
             >
-              <LayoutDashboard className="w-4 h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="text-xs sm:text-sm">Dashboard</span>
             </Button>
           )}
 
@@ -66,7 +66,7 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
             <>
               <Button
                 size="sm"
-                className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0 max-w-[8rem] truncate"
+                className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0 max-w-[7rem] sm:max-w-[10rem] truncate"
                 onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}
               >
                 {user.name.split(" ")[0]}
@@ -74,21 +74,21 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
               <Button
                 variant="outline"
                 size="sm"
-                className="hover:scale-105 transition-transform shrink-0"
+                className="hover:scale-105 transition-transform shrink-0 gap-1.5"
                 onClick={() => { logout(); navigate("/"); }}
               >
-                <LogOut className="w-4 h-4 sm:mr-1" />
-                <span className="hidden sm:inline">Logout</span>
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs sm:text-sm">Logout</span>
               </Button>
             </>
           ) : (
             <Button
               size="sm"
-              className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0"
+              className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0 gap-1.5"
               onClick={() => navigate("/login")}
             >
-              <LogIn className="w-4 h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Login</span>
+              <LogIn className="w-4 h-4" />
+              <span className="text-xs sm:text-sm">Login</span>
             </Button>
           )}
         </nav>
