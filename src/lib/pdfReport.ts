@@ -20,10 +20,38 @@ const TEAL = [20, 184, 166] as const;
 
 const PH = 297; // A4 height
 const PW_A4 = 210;
-const MARGIN = 16;          // slightly tighter horizontal margin so we never clip
-const CONTENT_W = PW_A4 - MARGIN * 2;   // 178mm of safe content width
+// 40px ≈ 14mm at 72dpi — we use 18mm to give true breathing room on every side
+// while keeping plenty of safe text width. Right edge can never be hit.
+const MARGIN = 18;
+const CONTENT_W = PW_A4 - MARGIN * 2;   // 174mm of safe content width
 const FOOTER_H = 16;
-const MAX_Y = PH - FOOTER_H - 12;       // extra bottom safety so text never collides with footer
+const TOP_SAFE = 36;                    // first y-position under the page header band
+const MAX_Y = PH - FOOTER_H - 14;       // bottom safety so text never collides with footer
+
+// ---- Abbreviation expansion ----------------------------------------------
+// Expand the first occurrence of every abbreviation per page so the reader
+// never sees a bare acronym without context.
+const ABBREVIATIONS: Record<string, string> = {
+  IQ: "Intelligence Quotient",
+  EQ: "Emotional Quotient",
+  AQ: "Adversity Quotient",
+  CQ: "Creative Quotient",
+  MBTI: "Myers-Briggs Type Indicator",
+  DISC: "Dominance / Influence / Steadiness / Compliance",
+  VAK: "Visual / Auditory / Kinesthetic",
+  RIASEC: "Realistic / Investigative / Artistic / Social / Enterprising / Conventional",
+  SWOT: "Strengths / Weaknesses / Opportunities / Threats",
+};
+
+// Sanitises strings so we never accidentally render letter-spaced "D e v e l o p"
+// (caused when source data contains stray double spaces or NBSPs).
+function clean(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/\u00A0/g, " ")    // non-breaking space -> normal space
+    .replace(/\s+/g, " ")        // collapse all whitespace
+    .trim();
+}
 
 function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?: string) {
   const pw = doc.internal.pageSize.getWidth();
@@ -41,6 +69,7 @@ function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?:
 }
 
 function sectionTitle(doc: jsPDF, text: string, y: number, color: readonly [number, number, number] = BLUE): number {
+  text = clean(text);
   doc.setFontSize(13); doc.setFont("helvetica", "bold");
   const lines = doc.splitTextToSize(text, CONTENT_W);
   y = ensureSpace(doc, y, 6 + lines.length * 6 + 4);
@@ -58,6 +87,7 @@ function sectionTitle(doc: jsPDF, text: string, y: number, color: readonly [numb
 }
 
 function subTitle(doc: jsPDF, text: string, y: number): number {
+  text = clean(text);
   y = ensureSpace(doc, y, 10);
   doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...BLUE);
   const lines = doc.splitTextToSize(text, CONTENT_W);
@@ -67,6 +97,7 @@ function subTitle(doc: jsPDF, text: string, y: number): number {
 }
 
 function subSubTitle(doc: jsPDF, text: string, y: number): number {
+  text = clean(text);
   y = ensureSpace(doc, y, 8);
   doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(60, 60, 60);
   const lines = doc.splitTextToSize(text, CONTENT_W - 3);
@@ -75,9 +106,13 @@ function subSubTitle(doc: jsPDF, text: string, y: number): number {
   return y + lines.length * 4.5 + 2;
 }
 
-function para(doc: jsPDF, text: string, x: number, y: number, maxW: number, fontSize = 10, lineH = 5): number {
+function para(doc: jsPDF, text: string, x: number, y: number, maxW: number, fontSize = 10, lineH = 5.2): number {
+  text = clean(text);
   doc.setFontSize(fontSize);
-  const lines = doc.splitTextToSize(text, maxW);
+  // Cap wrapping width at the safe right edge so even if a caller passes too
+  // large a maxW, we never paint outside the printable area.
+  const safeMaxW = Math.min(maxW, MARGIN + CONTENT_W - x);
+  const lines = doc.splitTextToSize(text, safeMaxW);
   for (const line of lines) {
     y = ensureSpace(doc, y, lineH + 2);
     doc.text(line, x, y);
@@ -87,28 +122,29 @@ function para(doc: jsPDF, text: string, x: number, y: number, maxW: number, font
 }
 
 function explanation(doc: jsPDF, text: string, y: number): number {
+  text = clean(text);
   doc.setFontSize(9); doc.setTextColor(80, 80, 80);
   const lines = doc.splitTextToSize(text, CONTENT_W - 6);
   for (const line of lines) {
     y = ensureSpace(doc, y, 5);
-    doc.text(line, MARGIN + 3, y); y += 4.5;
+    doc.text(line, MARGIN + 3, y); y += 4.6;
   }
   doc.setFontSize(10); doc.setTextColor(0, 0, 0);
   return y + 2;
 }
 
 function boldLabel(doc: jsPDF, label: string, value: string, y: number, x = MARGIN): number {
+  label = clean(label); value = clean(value);
   doc.setFontSize(10);
   const labelW = doc.getTextWidth(label) + 1;
-  const availInline = CONTENT_W - labelW - (x - MARGIN);
-  // If the value fits in less than ~25% of the line, it'd look orphaned — wrap below for readability.
-  const inlineLines = doc.splitTextToSize(value, availInline);
+  const availInline = (MARGIN + CONTENT_W) - (x + labelW);
+  const inlineLines = doc.splitTextToSize(value, Math.max(20, availInline));
   const wrapBelow = availInline < 40;
   if (wrapBelow) {
     y = ensureSpace(doc, y, 7);
     doc.setFont("helvetica", "bold"); doc.text(label, x, y);
     doc.setFont("helvetica", "normal"); y += 5;
-    const valLines = doc.splitTextToSize(value, CONTENT_W - (x - MARGIN));
+    const valLines = doc.splitTextToSize(value, (MARGIN + CONTENT_W) - x);
     for (const line of valLines) { y = ensureSpace(doc, y, 5); doc.text(line, x, y); y += 5; }
     return y + 1;
   }
@@ -120,11 +156,14 @@ function boldLabel(doc: jsPDF, label: string, value: string, y: number, x = MARG
 }
 
 function bullets(doc: jsPDF, items: string[], x: number, y: number, maxW: number): number {
+  // Cap maxW so bullets never paint past the right margin
+  const safeMaxW = Math.min(maxW, MARGIN + CONTENT_W - x);
   for (const item of items) {
+    const cleaned = clean(item);
     y = ensureSpace(doc, y, 8);
-    const lines = doc.splitTextToSize(`•  ${item}`, maxW);
+    const lines = doc.splitTextToSize(`•  ${cleaned}`, safeMaxW);
     doc.text(lines, x, y);
-    y += lines.length * 5 + 1.5;
+    y += lines.length * 5.2 + 1.5;
   }
   return y;
 }
@@ -144,13 +183,13 @@ function progressBar(doc: jsPDF, label: string, value: number, y: number, barW =
 }
 
 function ensureSpace(doc: jsPDF, y: number, needed: number): number {
-  if (y + needed > MAX_Y) { doc.addPage(); return 15; }
+  if (y + needed > MAX_Y) { doc.addPage(); return 18; }
   return y;
 }
 
 function forceNewPage(doc: jsPDF): number {
   doc.addPage();
-  return 15;
+  return 18;
 }
 
 function divider(doc: jsPDF, y: number): number {
@@ -357,10 +396,34 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.text("Report powered by Interpretation Engine, Correlation Engine & Recommendation Engine", MARGIN, y);
 
   // ====================================================================
+  // ABBREVIATIONS GLOSSARY — every acronym, defined up front
+  // ====================================================================
+  doc.addPage();
+  doc.setFillColor(...DARK); doc.rect(0, 0, pw, 20, "F");
+  doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+  doc.text("ABBREVIATIONS & KEY TERMS", pw / 2, 13, { align: "center" });
+  doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal");
+  let gy = 35;
+  doc.setFontSize(10); doc.setTextColor(...GRAY);
+  gy = para(doc, "This report uses standard psychology abbreviations. Each one is also expanded the first time it appears in a section, but you can return to this page any time.", MARGIN, gy, CONTENT_W);
+  gy += 4;
+  doc.setTextColor(0, 0, 0);
+  Object.entries(ABBREVIATIONS).forEach(([abbr, full]) => {
+    gy = ensureSpace(doc, gy, 12);
+    doc.setFont("helvetica", "bold"); doc.setTextColor(...BLUE); doc.setFontSize(11);
+    doc.text(abbr, MARGIN, gy);
+    doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40); doc.setFontSize(10);
+    const lines = doc.splitTextToSize(`— ${full}`, CONTENT_W - 28);
+    doc.text(lines, MARGIN + 24, gy);
+    gy += Math.max(6, lines.length * 5) + 2;
+  });
+
+  // ====================================================================
   // SECTION 1: PROFILE SUMMARY (2 pages)
   // ====================================================================
   doc.addPage();
   addPageHeader(doc, 1, "Profile Summary", "Complete Personality & Performance Overview");
+
   y = 36;
 
   y = sectionTitle(doc, "Personal Information", y);
