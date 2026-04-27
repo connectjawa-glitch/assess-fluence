@@ -247,8 +247,12 @@ export default function AdminPage() {
               <p className="text-xs text-primary-foreground/70">From Effort to Impact</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" onClick={() => { logout(); navigate("/"); }}>
-            <LogOut className="w-4 h-4 mr-1" /> Logout
+          <Button
+            size="sm"
+            className="gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive shadow-md font-semibold"
+            onClick={() => { logout(); navigate("/"); }}
+          >
+            <LogOut className="w-4 h-4" /> <span>Logout</span>
           </Button>
         </div>
       </div>

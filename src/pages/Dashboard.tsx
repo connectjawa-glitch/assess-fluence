@@ -33,8 +33,12 @@ export default function DashboardPage() {
               <p className="text-xs text-primary-foreground/70 capitalize">{user.role}{user.companyName ? ` • ${user.companyName}` : ""}{user.school ? ` • ${user.school}` : ""}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 gap-1" onClick={() => { logout(); navigate("/"); }}>
-            <LogOut className="w-3.5 h-3.5" /> Logout
+          <Button
+            size="sm"
+            className="gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive shadow-md font-semibold"
+            onClick={() => { logout(); navigate("/"); }}
+          >
+            <LogOut className="w-3.5 h-3.5" /> <span>Logout</span>
           </Button>
         </div>
       </div>
