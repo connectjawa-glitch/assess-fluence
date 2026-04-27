@@ -800,12 +800,20 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = explanation(doc, "Individual dimensions tell only part of the story. The real power comes from combining DISC + MBTI + Quotients + Intelligence + Learning Style into a holistic profile.", y);
   y += 3;
 
-  // ★ RADAR CHART: Combined Profile
+  // ★ RADAR CHART: Combined Profile (all values normalized to 0-100)
   y = ensureSpace(doc, y, 80);
   const combinedLabels = ["DISC", "MBTI", "IQ", "EQ", "AQ", "CQ", "Learning", "Career"];
+  // MBTI raw scores aren't 0-100 — derive a clarity % from how decisive each preference is.
+  const mbtiPairs2: [keyof typeof results.mbti.scores, keyof typeof results.mbti.scores][] = [["E","I"],["S","N"],["T","F"],["J","P"]];
+  const mbtiClarity = Math.round(
+    (mbtiPairs2.reduce((sum, [a, b]) => {
+      const total = (results.mbti.scores[a] || 0) + (results.mbti.scores[b] || 0) || 1;
+      return sum + (Math.max(results.mbti.scores[a] || 0, results.mbti.scores[b] || 0) / total) * 100;
+    }, 0)) / 4
+  );
   const combinedValues = [
     Math.max(...Object.values(results.disc.percentages)),
-    Math.max(...Object.values(results.mbti.scores)),
+    mbtiClarity,
     results.quotients.IQ, results.quotients.EQ, results.quotients.AQ, results.quotients.CQ,
     Math.max(...Object.values(results.learningStyle.percentages)),
     Math.max(...Object.values(results.career.percentages))
