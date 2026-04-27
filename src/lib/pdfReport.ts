@@ -183,13 +183,13 @@ function progressBar(doc: jsPDF, label: string, value: number, y: number, barW =
 }
 
 function ensureSpace(doc: jsPDF, y: number, needed: number): number {
-  if (y + needed > MAX_Y) { doc.addPage(); return 15; }
+  if (y + needed > MAX_Y) { doc.addPage(); return 18; }
   return y;
 }
 
 function forceNewPage(doc: jsPDF): number {
   doc.addPage();
-  return 15;
+  return 18;
 }
 
 function divider(doc: jsPDF, y: number): number {
