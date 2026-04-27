@@ -72,13 +72,12 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
                 {user.name.split(" ")[0]}
               </Button>
               <Button
-                variant="outline"
                 size="sm"
-                className="shrink-0 gap-1.5 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                className="shrink-0 gap-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive shadow-md font-semibold"
                 onClick={() => { logout(); navigate("/"); }}
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs sm:text-sm font-semibold">Logout</span>
+                <span className="text-xs sm:text-sm">Logout</span>
               </Button>
             </>
           ) : (
