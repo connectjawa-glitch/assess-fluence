@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, Zap, ArrowRight, Crown } from "lucide-react";
+import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, ArrowRight, Crown } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { BrainLogo } from "@/components/BrainLogo";
 
@@ -20,6 +20,16 @@ const taglines = [
   "Could you lead like Alexander the Great?",
   "Discover the ruler within — your hidden archetype awaits.",
   "Left-brain logic vs Right-brain magic — which wins in you?",
+];
+
+// Famous personalities — used as a "Which legend matches you?" teaser strip on the home page.
+const archetypes = [
+  { emoji: "🚀", name: "Elon Musk",        type: "INTJ — Visionary Strategist",     accent: "from-cyan-500/20 to-blue-500/10",     ring: "ring-cyan-400/40" },
+  { emoji: "👑", name: "Alexander the Great", type: "Eagle (D) — Bold Ruler",        accent: "from-violet-500/20 to-fuchsia-500/10", ring: "ring-violet-400/40" },
+  { emoji: "🎨", name: "Leonardo da Vinci", type: "Polymath — All 8 Intelligences",  accent: "from-fuchsia-500/20 to-purple-500/10", ring: "ring-fuchsia-400/40" },
+  { emoji: "🧪", name: "Albert Einstein",   type: "INTP — Eternal Learner",          accent: "from-emerald-500/20 to-teal-500/10",   ring: "ring-emerald-400/40" },
+  { emoji: "💎", name: "Oprah Winfrey",     type: "ENFJ — Emotional Conductor",      accent: "from-amber-500/20 to-orange-500/10",   ring: "ring-amber-400/40" },
+  { emoji: "🍎", name: "Steve Jobs",        type: "ENTJ — Creative Commander",       accent: "from-rose-500/20 to-pink-500/10",      ring: "ring-rose-400/40" },
 ];
 
 const testimonials = [
