@@ -48,17 +48,19 @@ export default function Index() {
 
       {/* Hero */}
       <div className="gradient-hero text-primary-foreground relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-primary/30 blur-3xl animate-pulse" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-secondary/30 blur-3xl" style={{ animation: "pulse 4s ease-in-out infinite 1s" }} />
+        <div className="absolute inset-0 opacity-40 pointer-events-none">
+          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-cyan-400/40 blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-fuchsia-500/30 blur-3xl" style={{ animation: "pulse 5s ease-in-out infinite 0.5s" }} />
+          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-amber-400/30 blur-3xl" style={{ animation: "pulse 4s ease-in-out infinite 1s" }} />
+          <div className="absolute bottom-20 left-1/4 w-64 h-64 rounded-full bg-emerald-400/25 blur-3xl" style={{ animation: "pulse 6s ease-in-out infinite 2s" }} />
         </div>
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
           <div className="text-center max-w-3xl mx-auto">
             <div className="flex justify-center mb-6">
               <BrainLogo size={110} animated />
             </div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-foreground/10 text-sm mb-6 animate-fade-in">
-              <Crown className="w-4 h-4" /> 199 Research-Backed Questions • 10-Section Deep Report
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400/20 via-primary-foreground/15 to-fuchsia-400/20 border border-primary-foreground/25 text-sm mb-6 animate-fade-in backdrop-blur-sm">
+              <Crown className="w-4 h-4 text-amber-300" /> Research-Backed • Deep Insight Report
             </div>
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-4 leading-tight animate-fade-in">
               Personality &amp; Intelligence Assessment
