@@ -1189,18 +1189,25 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.setFillColor(...DARK); doc.rect(0, 0, pw, PH, "F");
   doc.setTextColor(255, 255, 255);
 
+  // Safe horizontal width for centered text on the conclusion page.
+  // We keep a generous side margin so even long names/titles wrap cleanly
+  // and never run off either edge of the page.
+  const CONC_MARGIN = 20;
+  const CONC_W = pw - CONC_MARGIN * 2;
+
   doc.setFontSize(28); doc.setFont("helvetica", "bold");
-  doc.text("PERFY", pw / 2, 50, { align: "center" });
-  doc.setFontSize(12); doc.setFont("helvetica", "normal");
-  doc.text("From Effort to Impact", pw / 2, 60, { align: "center" });
+  doc.text("PERFY", pw / 2, 42, { align: "center" });
+  doc.setFontSize(11); doc.setFont("helvetica", "normal");
+  doc.text("From Effort to Impact", pw / 2, 51, { align: "center" });
 
   doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5);
-  doc.line(pw / 2 - 30, 68, pw / 2 + 30, 68);
+  doc.line(pw / 2 - 30, 58, pw / 2 + 30, 58);
 
-  doc.setFontSize(16); doc.setFont("helvetica", "bold");
-  doc.text("Report Summary", pw / 2, 85, { align: "center" });
+  doc.setFontSize(15); doc.setFont("helvetica", "bold");
+  doc.text("Report Summary", pw / 2, 70, { align: "center" });
 
-  doc.setFontSize(11); doc.setFont("helvetica", "normal");
+  // ── Centered, width-wrapped summary lines (prevents long names overflowing)
+  doc.setFontSize(10); doc.setFont("helvetica", "normal");
   const summaryLines = [
     `Name: ${user.name}`,
     `DISC: ${results.disc.dominant} (${birdName})`,
@@ -1211,12 +1218,20 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     `Top Intelligence: ${results.intelligence.top2.join(" & ")}`,
     `Career Direction: ${results.career.top2.join(" & ")}`,
   ];
-  let sy = 100;
-  summaryLines.forEach(line => { doc.text(line, pw / 2, sy, { align: "center" }); sy += 8; });
+  let sy = 82;
+  summaryLines.forEach(line => {
+    const wrapped = doc.splitTextToSize(clean(line), CONC_W);
+    wrapped.forEach((wl: string) => {
+      doc.text(wl, pw / 2, sy, { align: "center" });
+      sy += 5.5;
+    });
+    sy += 1;
+  });
 
-  sy += 10;
-  doc.setFontSize(10);
-  doc.text("Key Takeaways:", pw / 2, sy, { align: "center" }); sy += 8;
+  sy += 4;
+  doc.setFontSize(11); doc.setFont("helvetica", "bold");
+  doc.text("Key Takeaways", pw / 2, sy, { align: "center" }); sy += 7;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
   const takeaways = [
     `You are a ${birdName} — ${discInfo.brief}`,
     `Your ${results.mbti.type} type makes you a natural ${mbtiInfo?.title || "unique personality"}`,
@@ -1224,41 +1239,57 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     `Pursue ${results.career.top2.join(" and ")} career paths for optimal fit`,
   ];
   takeaways.forEach(t => {
-    const lines = doc.splitTextToSize(`>  ${t}`, pw - 50);
-    doc.text(lines, pw / 2, sy, { align: "center" }); sy += lines.length * 6;
+    const wrapped = doc.splitTextToSize(`>  ${clean(t)}`, CONC_W);
+    wrapped.forEach((wl: string) => {
+      doc.text(wl, pw / 2, sy, { align: "center" });
+      sy += 5;
+    });
+    sy += 1.5;
   });
 
-  // ── Left vs Right Brain bars (always visible on summary)
-  sy += 14;
+  // ── Brain Hemisphere Balance bars (always within page bounds)
+  sy += 6;
   doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
   doc.text("Brain Hemisphere Balance", pw / 2, sy, { align: "center" });
-  sy += 8;
-  const barW = 120;
+  sy += 7;
+
+  const barW = Math.min(120, CONC_W);
   const barX = (pw - barW) / 2;
   const leftPct = results.brainDominance.left;
   const rightPct = results.brainDominance.right;
-  // Track
-  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
-  // Left fill
-  doc.setFillColor(59, 130, 246); doc.roundedRect(barX, sy, (leftPct / 100) * barW, 6, 2, 2, "F");
-  sy += 11;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-  doc.text(`Left Brain (Logical): ${leftPct}%`, barX, sy);
-  doc.text(`Right Brain (Creative): ${rightPct}%`, barX + barW, sy, { align: "right" });
-  sy += 8;
+
+  // Left hemisphere bar
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 5, 1.5, 1.5, "F");
+  doc.setFillColor(59, 130, 246); doc.roundedRect(barX, sy, (leftPct / 100) * barW, 5, 1.5, 1.5, "F");
+  sy += 9;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+  doc.text(`Left (Logical) ${leftPct}%`, barX, sy);
+  doc.text(`Right (Creative) ${rightPct}%`, barX + barW, sy, { align: "right" });
+  sy += 6;
   // Right hemisphere bar
-  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
-  doc.setFillColor(236, 72, 153); doc.roundedRect(barX, sy, (rightPct / 100) * barW, 6, 2, 2, "F");
-  sy += 12;
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 5, 1.5, 1.5, "F");
+  doc.setFillColor(236, 72, 153); doc.roundedRect(barX, sy, (rightPct / 100) * barW, 5, 1.5, 1.5, "F");
+  sy += 10;
 
-  doc.setFontSize(11); doc.setFont("helvetica", "italic");
-  doc.text('"Data alone does not create value."', pw / 2, sy, { align: "center" }); sy += 7;
-  doc.text('"Interpretation creates understanding."', pw / 2, sy, { align: "center" }); sy += 7;
-  doc.text('"Action creates transformation."', pw / 2, sy, { align: "center" }); sy += 15;
+  // Quote block — wrap so even custom strings stay inside the page
+  doc.setFontSize(10); doc.setFont("helvetica", "italic");
+  ['"Data alone does not create value."',
+   '"Interpretation creates understanding."',
+   '"Action creates transformation."'].forEach(q => {
+    const wrapped = doc.splitTextToSize(q, CONC_W);
+    wrapped.forEach((wl: string) => { doc.text(wl, pw / 2, sy, { align: "center" }); sy += 5.5; });
+  });
+  sy += 6;
 
-  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-  doc.text("This report was generated by Perfy's Deep Interpretation System", pw / 2, sy, { align: "center" }); sy += 5;
-  doc.text("Powered by Interpretation Engine, Correlation Engine & Recommendation Engine", pw / 2, sy, { align: "center" });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+  const footerLines = [
+    "This report was generated by Perfy's Deep Interpretation System",
+    "Powered by Interpretation, Correlation & Recommendation Engines",
+  ];
+  footerLines.forEach(line => {
+    const wrapped = doc.splitTextToSize(line, CONC_W);
+    wrapped.forEach((wl: string) => { doc.text(wl, pw / 2, sy, { align: "center" }); sy += 4.5; });
+  });
 
   doc.setTextColor(0, 0, 0);
 
