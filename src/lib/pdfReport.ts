@@ -20,10 +20,38 @@ const TEAL = [20, 184, 166] as const;
 
 const PH = 297; // A4 height
 const PW_A4 = 210;
-const MARGIN = 16;          // slightly tighter horizontal margin so we never clip
-const CONTENT_W = PW_A4 - MARGIN * 2;   // 178mm of safe content width
+// 40px ≈ 14mm at 72dpi — we use 18mm to give true breathing room on every side
+// while keeping plenty of safe text width. Right edge can never be hit.
+const MARGIN = 18;
+const CONTENT_W = PW_A4 - MARGIN * 2;   // 174mm of safe content width
 const FOOTER_H = 16;
-const MAX_Y = PH - FOOTER_H - 12;       // extra bottom safety so text never collides with footer
+const TOP_SAFE = 36;                    // first y-position under the page header band
+const MAX_Y = PH - FOOTER_H - 14;       // bottom safety so text never collides with footer
+
+// ---- Abbreviation expansion ----------------------------------------------
+// Expand the first occurrence of every abbreviation per page so the reader
+// never sees a bare acronym without context.
+const ABBREVIATIONS: Record<string, string> = {
+  IQ: "Intelligence Quotient",
+  EQ: "Emotional Quotient",
+  AQ: "Adversity Quotient",
+  CQ: "Creative Quotient",
+  MBTI: "Myers-Briggs Type Indicator",
+  DISC: "Dominance / Influence / Steadiness / Compliance",
+  VAK: "Visual / Auditory / Kinesthetic",
+  RIASEC: "Realistic / Investigative / Artistic / Social / Enterprising / Conventional",
+  SWOT: "Strengths / Weaknesses / Opportunities / Threats",
+};
+
+// Sanitises strings so we never accidentally render letter-spaced "D e v e l o p"
+// (caused when source data contains stray double spaces or NBSPs).
+function clean(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/\u00A0/g, " ")    // non-breaking space -> normal space
+    .replace(/\s+/g, " ")        // collapse all whitespace
+    .trim();
+}
 
 function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?: string) {
   const pw = doc.internal.pageSize.getWidth();
