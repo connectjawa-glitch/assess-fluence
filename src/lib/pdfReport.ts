@@ -41,15 +41,20 @@ function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?:
 }
 
 function sectionTitle(doc: jsPDF, text: string, y: number, color: readonly [number, number, number] = BLUE): number {
-  y = ensureSpace(doc, y, 14);
-  doc.setFontSize(13); doc.setFont("helvetica", "bold"); doc.setTextColor(...color);
+  doc.setFontSize(13); doc.setFont("helvetica", "bold");
   const lines = doc.splitTextToSize(text, CONTENT_W);
-  doc.text(lines[0], MARGIN, y);
+  y = ensureSpace(doc, y, 6 + lines.length * 6 + 4);
+  doc.setTextColor(...color);
+  for (let i = 0; i < lines.length; i++) {
+    doc.text(lines[i], MARGIN, y + i * 6);
+  }
+  const lastY = y + (lines.length - 1) * 6;
+  const underlineW = Math.min(doc.getTextWidth(lines[lines.length - 1]), CONTENT_W);
   doc.setDrawColor(...color); doc.setLineWidth(0.5);
-  doc.line(MARGIN, y + 1.5, MARGIN + Math.min(doc.getTextWidth(lines[0]), CONTENT_W), y + 1.5);
+  doc.line(MARGIN, lastY + 1.5, MARGIN + underlineW, lastY + 1.5);
   doc.setDrawColor(0, 0, 0);
   doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-  return y + 8;
+  return lastY + 8;
 }
 
 function subTitle(doc: jsPDF, text: string, y: number): number {
