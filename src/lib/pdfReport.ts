@@ -969,27 +969,25 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = para(doc, `Most promising industries: ${careerTypeDetails[results.career.top2[0]]?.industries?.slice(0, 3).join(", ")} and ${careerTypeDetails[results.career.top2[1]]?.industries?.slice(0, 3).join(", ")}.`, MARGIN, y, CONTENT_W);
   y += 5;
 
-  // Brain Dominance for employees
-  if (user.role === "employee") {
-    y = ensureSpace(doc, y, 30);
-    y = sectionTitle(doc, "Brain Dominance Analysis", y);
+  // Brain Dominance for ALL users
+  y = ensureSpace(doc, y, 30);
+  y = sectionTitle(doc, "Brain Dominance Analysis", y);
 
-    // ★ PIE CHART: Brain Dominance
-    y = ensureSpace(doc, y, 70);
-    drawPieChart(doc, pw / 2, y + 25, 20,
-      ["Left Brain (Logical)", "Right Brain (Creative)"],
-      [results.brainDominance.left, results.brainDominance.right],
-      { title: "Brain Hemisphere Dominance", colors: [[59, 130, 246], [236, 72, 153]] }
-    );
-    y += 60;
+  // ★ PIE CHART: Brain Dominance
+  y = ensureSpace(doc, y, 70);
+  drawPieChart(doc, pw / 2, y + 25, 20,
+    ["Left Brain (Logical)", "Right Brain (Creative)"],
+    [results.brainDominance.left, results.brainDominance.right],
+    { title: "Brain Hemisphere Dominance", colors: [[59, 130, 246], [236, 72, 153]] }
+  );
+  y += 60;
 
-    y = boldLabel(doc, "Left Brain (Logical): ", `${results.brainDominance.left}%`, y);
-    y = boldLabel(doc, "Right Brain (Creative): ", `${results.brainDominance.right}%`, y);
-    y += 2;
-    y = para(doc, results.brainDominance.left > results.brainDominance.right
-      ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical thinking.`
-      : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive thinking.`, MARGIN, y, CONTENT_W);
-  }
+  y = boldLabel(doc, "Left Brain (Logical): ", `${results.brainDominance.left}%`, y);
+  y = boldLabel(doc, "Right Brain (Creative): ", `${results.brainDominance.right}%`, y);
+  y += 2;
+  y = para(doc, results.brainDominance.left > results.brainDominance.right
+    ? `You are predominantly left-brained (${results.brainDominance.left}%), indicating strong logical, analytical thinking.`
+    : `You are predominantly right-brained (${results.brainDominance.right}%), indicating strong creative, intuitive thinking.`, MARGIN, y, CONTENT_W);
 
   // ====================================================================
   // FINAL PAGE — CONCLUSION
@@ -1037,7 +1035,29 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     doc.text(lines, pw / 2, sy, { align: "center" }); sy += lines.length * 6;
   });
 
-  sy += 15;
+  // ── Left vs Right Brain bars (always visible on summary)
+  sy += 14;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+  doc.text("Brain Hemisphere Balance", pw / 2, sy, { align: "center" });
+  sy += 8;
+  const barW = 120;
+  const barX = (pw - barW) / 2;
+  const leftPct = results.brainDominance.left;
+  const rightPct = results.brainDominance.right;
+  // Track
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
+  // Left fill
+  doc.setFillColor(59, 130, 246); doc.roundedRect(barX, sy, (leftPct / 100) * barW, 6, 2, 2, "F");
+  sy += 11;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+  doc.text(`Left Brain (Logical): ${leftPct}%`, barX, sy);
+  doc.text(`Right Brain (Creative): ${rightPct}%`, barX + barW, sy, { align: "right" });
+  sy += 8;
+  // Right hemisphere bar
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
+  doc.setFillColor(236, 72, 153); doc.roundedRect(barX, sy, (rightPct / 100) * barW, 6, 2, 2, "F");
+  sy += 12;
+
   doc.setFontSize(11); doc.setFont("helvetica", "italic");
   doc.text('"Data alone does not create value."', pw / 2, sy, { align: "center" }); sy += 7;
   doc.text('"Interpretation creates understanding."', pw / 2, sy, { align: "center" }); sy += 7;

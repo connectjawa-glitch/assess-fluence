@@ -1,4 +1,5 @@
-import { type User } from "@/lib/auth";
+import { useState } from "react";
+import { type User, useAuth } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +8,14 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area, PolarRadiusAxis
 } from "recharts";
 import { generateDeepReport } from "@/lib/pdfReport";
-import { Download, Printer, ArrowLeft, Brain, Target, BookOpen, Lightbulb, Shield, Rocket, TrendingUp, Users, Star, Zap } from "lucide-react";
+import { Download, Printer, ArrowLeft, Brain, Target, BookOpen, Lightbulb, Shield, Rocket, TrendingUp, Users, Star, Zap, Lock } from "lucide-react";
 import {
   mbtiInterpretations, discInterpretations, intelligenceDescriptions,
   learningStyleDetails, quotientInterpretations, careerTypeDetails,
   generateCorrelationInsight, generateActionPlan, generateCareerRoadmap
 } from "@/lib/interpretations";
-import perfyLogo from "@/assets/perfy-logo.jpeg";
+import { BrainLogo } from "@/components/BrainLogo";
+import PaymentDialog from "@/components/PaymentDialog";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
@@ -102,8 +104,29 @@ function InfoCard({ icon, title, children, accent = "blue" }: { icon: string; ti
 }
 
 export default function UserReport({ targetUser, onBack, showBackButton = true }: Props) {
+  const { user: viewer } = useAuth();
   const responses: Responses = JSON.parse(localStorage.getItem(`mm_responses_${targetUser.id}`) || "{}");
   const results: AssessmentResults = calculateAllResults(responses, targetUser.role === "employee");
+
+  // Paywall state — admins see everything, regular users must unlock once per session.
+  const isAdmin = viewer?.role === "admin";
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`pia_unlocked_${targetUser.id}`) === "1";
+  });
+  const [payOpen, setPayOpen] = useState(false);
+
+  const canDownload = isAdmin || unlocked;
+  const handleUnlock = () => {
+    setUnlocked(true);
+    localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
+    // Give the dialog a tick to close, then trigger the download.
+    setTimeout(() => generateDeepReport(targetUser, results), 200);
+  };
+  const handleDownloadClick = () => {
+    if (canDownload) generateDeepReport(targetUser, results);
+    else setPayOpen(true);
+  };
 
   const discData = [
     { name: "D (Dominant)", value: results.disc.percentages.D },
@@ -170,7 +193,7 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
               {showBackButton && onBack && (
                 <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl"><ArrowLeft className="w-4 h-4" /></Button>
               )}
-              <img src={perfyLogo} alt="Perfy" className="h-14 w-14 rounded-xl shadow-lg object-cover ring-2 ring-primary/20" />
+              <BrainLogo size={56} />
               <div>
                 <h2 className="text-2xl font-bold text-foreground tracking-tight">{targetUser.name}</h2>
                 <p className="text-sm text-muted-foreground capitalize flex items-center gap-1.5">
@@ -184,8 +207,9 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={handlePrint} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
-              <Button size="sm" onClick={() => generateDeepReport(targetUser, results)} className="rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg hover:shadow-xl transition-shadow">
-                <Download className="w-4 h-4 mr-1.5" /> Download PDF
+              <Button size="sm" onClick={handleDownloadClick} className="rounded-xl gradient-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
+                {canDownload ? <Download className="w-4 h-4 mr-1.5" /> : <Lock className="w-4 h-4 mr-1.5" />}
+                {canDownload ? "Download PDF" : "Download Detailed Report"}
               </Button>
             </div>
           </div>
@@ -743,16 +767,24 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       {/* Download footer */}
       <Section delay={650}>
         <div className="flex flex-col items-center gap-4 py-10 border-t">
-          <img src={perfyLogo} alt="Perfy" className="h-12 rounded-xl shadow-md ring-2 ring-primary/10" />
-          <p className="text-sm text-muted-foreground font-medium">Perfy — From Effort to Impact</p>
+          <BrainLogo size={56} />
+          <p className="text-sm text-muted-foreground font-medium">Personality &amp; Intelligence Assessment — From Effort to Impact</p>
+          {!canDownload && (
+            <p className="text-xs text-muted-foreground max-w-md text-center">
+              You're viewing the free overview. Unlock the full 20-page detailed PDF report with brain mapping, action plans, career roadmap and counseling add-ons.
+            </p>
+          )}
           <div className="flex gap-3">
             <Button variant="outline" onClick={handlePrint} className="rounded-xl"><Printer className="w-4 h-4 mr-2" /> Print Report</Button>
-            <Button onClick={() => generateDeepReport(targetUser, results)} className="rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg hover:shadow-xl transition-shadow">
-              <Download className="w-4 h-4 mr-2" /> Download Full Report (PDF)
+            <Button onClick={handleDownloadClick} className="rounded-xl gradient-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
+              {canDownload ? <Download className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+              {canDownload ? "Download Full Report (PDF)" : "Download Detailed Report"}
             </Button>
           </div>
         </div>
       </Section>
+
+      <PaymentDialog open={payOpen} onOpenChange={setPayOpen} onUnlock={handleUnlock} />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3 } from "lucide-react";
 import UserReport from "@/components/UserReport";
+import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
 import perfyLogo from "@/assets/perfy-logo.jpeg";
 
@@ -29,6 +30,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("analytics");
 
   // Company form
   const [newCompanyName, setNewCompanyName] = useState("");
@@ -274,11 +276,12 @@ export default function AdminPage() {
           ))}
         </div>
 
-        <Tabs defaultValue="analytics" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
             <TabsTrigger value="users">👥 Users</TabsTrigger>
             <TabsTrigger value="companies">🏢 Companies</TabsTrigger>
+            <TabsTrigger value="music">🎵 Music</TabsTrigger>
           </TabsList>
 
           {/* ANALYTICS TAB */}
@@ -561,7 +564,7 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="flex gap-2 mt-3">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setCompanyFilter(c.code); /* switch to users tab */ }}>
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setCompanyFilter(c.code); setActiveTab("users"); }}>
                           <Users className="w-3 h-3 mr-1" /> View Users
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => exportCompanyReport(c.code)}>
@@ -573,6 +576,11 @@ export default function AdminPage() {
                 );
               })}
             </div>
+          </TabsContent>
+
+          {/* MUSIC TAB */}
+          <TabsContent value="music" className="space-y-4">
+            <MusicAdmin />
           </TabsContent>
         </Tabs>
       </div>
