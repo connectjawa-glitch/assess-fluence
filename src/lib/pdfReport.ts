@@ -365,6 +365,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 2, "Personality Interpretation", "DISC Personality + MBTI Deep Analysis");
   y = 36;
+  y = whyBox(doc, "Personality is the lens through which you see and act on the world. We measure DISC and MBTI together because DISC reveals how you behave under pressure (your observable style) while MBTI reveals how you think underneath (your cognitive preferences). Combining them gives a complete picture: who you are AND how you operate.", y, BLUE);
 
   y = sectionTitle(doc, "DISC Personality Analysis", y);
   y = explanation(doc, "DISC is a widely-used behavioral assessment developed from the work of psychologist William Moulton Marston. It measures four behavioral dimensions: D (Dominance) = how you handle problems, I (Influence) = how you interact with others, S (Steadiness) = your patience and supportiveness, C (Compliance) = how you approach rules and quality.", y);
@@ -510,6 +511,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 3, "Intelligence Analysis", "IQ  •  EQ  •  AQ  •  CQ — Detailed Interpretation");
   y = 36;
+  y = whyBox(doc, "Modern psychology recognises that intelligence is not one-dimensional. IQ alone predicts only ~20% of life success. We measure four quotients because together they predict performance across the full spectrum of work and life: IQ for problem-solving, EQ for relationships, AQ for resilience under pressure, and CQ for innovation. Knowing where you are weakest is the single highest-leverage place to grow.", y, TEAL);
 
   y = sectionTitle(doc, "Understanding the Four Quotients", y);
   y = explanation(doc, "Intelligence is not a single measure. Modern psychology recognizes multiple dimensions. The four quotients measured here represent different aspects of cognitive and emotional capability.", y);
@@ -580,6 +582,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 4, "Learning Style Guide", `Dominant: ${results.learningStyle.dominant}`);
   y = 36;
+  y = whyBox(doc, "Information enters your brain through three main channels — Visual (seeing), Auditory (hearing) and Kinesthetic (doing). When learning material aligns with your dominant channel, your brain encodes it 2-3x more efficiently. Most people unknowingly fight against their natural channel; identifying yours instantly multiplies how fast you learn at school, on the job, and in life.", y, GREEN);
 
   y = sectionTitle(doc, "Understanding Learning Styles", y);
   y = explanation(doc, "Learning style theory, based on the VAK model, identifies three primary channels: Visual (seeing and reading), Auditory (hearing and discussing), and Kinesthetic (touching and doing). Your dominant style indicates the channel most efficient for you.", y);
@@ -641,6 +644,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 5, "Multiple Intelligence Analysis", `Top: ${results.intelligence.top2.join(" & ")}`);
   y = 36;
+  y = whyBox(doc, "Howard Gardner's theory shows there are eight distinct kinds of intelligence — not just the linguistic and logical ones schools usually test. We map all eight because your top two intelligences ARE your competitive advantage. Knowing them helps you choose careers, hobbies and relationships where you naturally outperform — instead of grinding against your weaker areas.", y, PURPLE);
 
   y = sectionTitle(doc, "Howard Gardner's Theory of Multiple Intelligences", y);
   y = explanation(doc, "Developed by Harvard psychologist Howard Gardner in 1983, this framework identifies 8 distinct types of intelligence beyond traditional IQ. Every person has all 8, but each person's unique profile creates their competitive advantage.", y);
@@ -704,6 +708,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 6, "Career Fit Analysis (RIASEC)", `Top: ${results.career.top2.join(" & ")}`);
   y = 36;
+  y = whyBox(doc, "John Holland's RIASEC framework — the gold standard used by career counsellors worldwide — proves that career satisfaction comes from matching your personality to a work environment. People in careers aligned with their RIASEC type report ~70% higher engagement and lower burnout. We measure this so you choose work that feels like 'play' rather than work.", y, TEAL);
 
   y = sectionTitle(doc, "Holland's RIASEC Career Theory", y);
   y = explanation(doc, "Developed by psychologist John Holland, the RIASEC model categorizes personalities and work environments into 6 types: R = Realistic (practical), I = Investigative (analytical), A = Artistic (creative), S = Social (helping), E = Enterprising (leading), C = Conventional (organizing).", y);
@@ -765,6 +770,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 7, "SWOT Analysis", "Strengths, Weaknesses, Opportunities & Threats");
   y = 36;
+  y = whyBox(doc, "SWOT translates everything we measured into a one-page action map. Strengths and Weaknesses are internal (you control them); Opportunities and Threats are external (you respond to them). Generated automatically from your scores, this is the lens used in business strategy worldwide — applied here to YOUR personal strategy.", y, AMBER);
 
   y = sectionTitle(doc, "Understanding SWOT", y);
   y = explanation(doc, "SWOT stands for Strengths, Weaknesses, Opportunities, and Threats. Strengths and Weaknesses are internal factors (within your control), while Opportunities and Threats are external factors.", y);
@@ -820,6 +826,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 8, "Combined Personality Insight", "Cross-Dimensional Correlation Analysis");
   y = 36;
+  y = whyBox(doc, "Single dimensions are deceiving — two people with the same MBTI can behave very differently because of their DISC, EQ or learning style. We correlate ALL dimensions here because your unique fingerprint emerges where they intersect. This is the difference between a generic personality blurb and a report that actually describes YOU.", y, PURPLE);
 
   y = sectionTitle(doc, "How Multiple Dimensions Create Your Unique Profile", y);
   y = explanation(doc, "Individual dimensions tell only part of the story. The real power comes from combining DISC + MBTI + Quotients + Intelligence + Learning Style into a holistic profile.", y);
@@ -899,6 +906,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 9, "Action Plan", "Short-Term & Long-Term Development Strategies");
   y = 36;
+  y = whyBox(doc, "Insight without action is wasted. This plan converts your scores into specific, daily-doable steps focused on your single highest-leverage growth area. Targeting your weakest quotient yields ~3x the impact of polishing your strongest — that's why every recommendation is anchored to your lowest dimension.", y, GREEN);
 
   y = sectionTitle(doc, "Personalized Development Strategy", y);
   y = explanation(doc, "This action plan is generated based on your lowest scores, personality gaps, and career alignment. Each recommendation is specific, measurable, and designed for immediate implementation.", y);
@@ -960,6 +968,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = forceNewPage(doc);
   addPageHeader(doc, 10, "Career Roadmap", `${results.career.top2.join(" & ")} Career Path`);
   y = 36;
+  y = whyBox(doc, "Careers unfold over decades, not months. We separate your roadmap into Foundation (0-2y), Growth (2-5y) and Leadership (5-10y) because each phase needs different skills and bets. Building expertise that compounds across phases — instead of jumping randomly — is what creates extraordinary careers.", y, TEAL);
 
   y = sectionTitle(doc, "Your Personalized Career Trajectory", y);
   y = explanation(doc, "This career roadmap combines your RIASEC mapping, DISC personality, MBTI type, intelligence profile, and quotient scores into a structured pathway.", y);
