@@ -244,6 +244,8 @@ function howMeasuredBox(doc: jsPDF, howWeMeasure: string, howWeGot: string, y: n
   doc.setTextColor(0, 0, 0); doc.setFontSize(10);
   return y + boxH + 4;
 }
+
+export function generateDeepReport(user: User, results: AssessmentResults) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pw = doc.internal.pageSize.getWidth();
 
