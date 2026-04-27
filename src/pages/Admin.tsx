@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3 } from "lucide-react";
 import UserReport from "@/components/UserReport";
+import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
 import perfyLogo from "@/assets/perfy-logo.jpeg";
 
@@ -575,6 +576,11 @@ export default function AdminPage() {
                 );
               })}
             </div>
+          </TabsContent>
+
+          {/* MUSIC TAB */}
+          <TabsContent value="music" className="space-y-4">
+            <MusicAdmin />
           </TabsContent>
         </Tabs>
       </div>
