@@ -72,7 +72,24 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     a.volume = volume;
     a.muted = muted;
     if (!a.src) a.src = currentSrc;
-    a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    const p = a.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => setPlaying(true)).catch(() => {
+        // Autoplay was blocked. Try once more muted so the audio element is "primed",
+        // then unmute as soon as we get a user gesture.
+        a.muted = true;
+        a.play().then(() => {
+          setPlaying(true);
+          const unlock = () => {
+            a.muted = muted;
+            window.removeEventListener("pointerdown", unlock);
+            window.removeEventListener("keydown", unlock);
+          };
+          window.addEventListener("pointerdown", unlock, { once: true });
+          window.addEventListener("keydown", unlock, { once: true });
+        }).catch(() => setPlaying(false));
+      });
+    }
   }, [volume, muted, currentSrc]);
 
   const stop = useCallback(() => {

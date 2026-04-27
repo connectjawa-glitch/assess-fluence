@@ -8,44 +8,84 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import type { Responses } from "@/lib/scoring";
 import { ChevronLeft, ChevronRight, CheckCircle, Save, Sparkles } from "lucide-react";
-import { BrainLogo } from "@/components/BrainLogo";
+import { BrainLogo, SECTION_LOBE_COLORS } from "@/components/BrainLogo";
 import MusicControls from "@/components/MusicControls";
 import { useMusic } from "@/lib/music";
 import { toast } from "@/hooks/use-toast";
 
 const scaleLabels = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
 
-const sectionVibes: Record<string, { tagline: string; encouragement: string[] }> = {
+interface SectionTheme {
+  emoji: string;
+  archetype: string;          // "INTJ — Elon Musk"
+  hookLine: string;           // "Are you the next…"
+  tagline: string;            // short subtitle
+  bgGradient: string;         // tailwind classes for outer surface
+  cardGradient: string;       // tailwind classes for inner card
+  encouragement: string[];
+}
+
+const sectionThemes: Record<string, SectionTheme> = {
   A: {
-    tagline: "How do you take charge? Let's reveal your DISC archetype.",
-    encouragement: ["Trust your instincts.", "There are no wrong answers — only honest ones.", "Reveal the leader within."],
+    emoji: "🦅",
+    archetype: "Bold Ruler — Alexander the Great",
+    hookLine: "Are you the next Alexander?",
+    tagline: "DISC behavioral profile — how you take charge.",
+    bgGradient: "from-violet-500/15 via-background to-indigo-500/10",
+    cardGradient: "from-violet-500/10 to-fuchsia-500/5",
+    encouragement: ["Trust your instincts.", "There are no wrong answers.", "Reveal the leader within."],
   },
   B: {
-    tagline: "Cognitive style — the MBTI mirror is held up to you.",
-    encouragement: ["Are you the next INTJ like Elon?", "Your mind is unique. Show us how it works.", "Pick the answer that *feels* most like you."],
+    emoji: "🧠",
+    archetype: "Visionary Strategist — INTJ, like Elon Musk",
+    hookLine: "Are you an INTJ like Elon Musk?",
+    tagline: "MBTI mirror — your cognitive operating system.",
+    bgGradient: "from-cyan-500/15 via-background to-blue-500/10",
+    cardGradient: "from-cyan-500/10 to-sky-500/5",
+    encouragement: ["Your mind is unique.", "Pick what *feels* like you.", "Future possibilities are forming."],
   },
   C: {
-    tagline: "Eight intelligences. Which ones light up in you?",
-    encouragement: ["Genius takes many forms.", "You're more intelligent than you think.", "Discover your hidden strengths."],
+    emoji: "💡",
+    archetype: "Polymath Genius — Da Vinci",
+    hookLine: "Could you be the next Da Vinci?",
+    tagline: "Eight intelligences — which ones light up in you?",
+    bgGradient: "from-fuchsia-500/15 via-background to-purple-500/10",
+    cardGradient: "from-fuchsia-500/10 to-purple-500/5",
+    encouragement: ["Genius takes many forms.", "You're more intelligent than you think.", "Hidden strengths surfacing…"],
   },
   D: {
+    emoji: "📚",
+    archetype: "Eternal Learner — Einstein",
+    hookLine: "Do you learn like Einstein?",
     tagline: "How does your brain absorb the world?",
-    encouragement: ["Visual, auditory, kinesthetic — all are powerful.", "Almost halfway. Keep going!", "Knowing how you learn changes everything."],
+    bgGradient: "from-emerald-500/15 via-background to-teal-500/10",
+    cardGradient: "from-emerald-500/10 to-teal-500/5",
+    encouragement: ["Visual, auditory, kinesthetic — all powerful.", "Halfway there!", "Knowing how you learn changes everything."],
   },
   E: {
-    tagline: "IQ • EQ • AQ • CQ — the four quotients of success.",
-    encouragement: ["You're doing brilliantly.", "Reveal the balance behind your potential.", "Adversity sharpens the strongest minds."],
+    emoji: "⚡",
+    archetype: "Balanced Force — IQ × EQ × AQ × CQ",
+    hookLine: "How balanced are your four quotients?",
+    tagline: "IQ • EQ • AQ • CQ — the four engines of success.",
+    bgGradient: "from-amber-500/15 via-background to-orange-500/10",
+    cardGradient: "from-amber-500/10 to-yellow-500/5",
+    encouragement: ["You're doing brilliantly.", "Adversity sharpens the strongest minds.", "The balance is forming."],
   },
   F: {
+    emoji: "🎯",
+    archetype: "Career Compass — RIASEC",
+    hookLine: "What's your destined career arc?",
     tagline: "Your career destiny — RIASEC compass calibration.",
-    encouragement: ["Last leg — finish strong!", "Your perfect career path is forming.", "One section away from your full report."],
+    bgGradient: "from-rose-500/15 via-background to-pink-500/10",
+    cardGradient: "from-rose-500/10 to-pink-500/5",
+    encouragement: ["Last leg — finish strong!", "Your path is forming.", "One section away from your full report."],
   },
 };
 
 export default function AssessmentPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { start: startMusic, stop: stopMusic } = useMusic();
+  const { start: startMusic, stop: stopMusic, muted, setMuted } = useMusic();
   const [sectionIdx, setSectionIdx] = useState(0);
   const [responses, setResponses] = useState<Responses>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -78,27 +118,25 @@ export default function AssessmentPage() {
     if (saved) {
       const parsed = JSON.parse(saved);
       setResponses(parsed);
-      // jump to first section with unanswered
       const firstUnfinished = sectionGroups.findIndex(g => g.questions.some(q => !parsed[q.id]));
       if (firstUnfinished >= 0) setSectionIdx(firstUnfinished);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate]);
 
-  // Music auto-start (after user gesture - we trigger on first answer click)
-  const [musicStarted, setMusicStarted] = useState(false);
-  const ensureMusic = () => {
-    if (musicStarted) return;
+  // Try music as soon as the page mounts. The MusicProvider falls back to a
+  // muted "primed" play if autoplay is blocked and unmutes on the first
+  // pointer/key event automatically.
+  useEffect(() => {
     startMusic();
-    setMusicStarted(true);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Stop music when leaving page
   useEffect(() => () => stopMusic(), [stopMusic]);
 
   const handleAnswer = (qid: number, value: string) => {
     if (!user) return;
-    ensureMusic();
     const updated = { ...responses, [qid]: parseInt(value) };
     setResponses(updated);
     localStorage.setItem(`mm_responses_${user.id}`, JSON.stringify(updated));
@@ -110,14 +148,13 @@ export default function AssessmentPage() {
 
   const handleNext = () => {
     if (!sectionAnswered) {
-      toast({ title: "A few more answers needed", description: "Please answer all questions in this section before continuing." });
+      toast({ title: "A few more answers needed", description: "Please answer everything in this section before continuing." });
       return;
     }
-    // Encouragement
-    const vibe = sectionVibes[current.meta.id];
+    const theme = sectionThemes[current.meta.id];
     toast({
-      title: `🧠 ${current.meta.name} complete!`,
-      description: vibe.encouragement[Math.floor(Math.random() * vibe.encouragement.length)],
+      title: `${theme.emoji} ${current.meta.name} complete!`,
+      description: theme.encouragement[Math.floor(Math.random() * theme.encouragement.length)],
     });
     if (sectionIdx < sectionGroups.length - 1) {
       setSectionIdx(s => s + 1);
@@ -143,21 +180,35 @@ export default function AssessmentPage() {
 
   if (!user) return null;
 
-  const vibe = sectionVibes[current.meta.id];
+  const theme = sectionThemes[current.meta.id];
+  const lobeColor = SECTION_LOBE_COLORS[current.meta.id];
 
   return (
-    <div className="min-h-screen bg-background" ref={containerRef}>
+    <div
+      className={`min-h-screen bg-gradient-to-br ${theme.bgGradient} transition-colors duration-700`}
+      ref={containerRef}
+    >
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-card/90 backdrop-blur-md border-b shadow-sm">
+      <div className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <BrainLogo size={36} />
+            <BrainLogo size={36} fills={fills} activeSection={current.meta.id} />
             <div className="min-w-0">
               <p className="text-sm font-display font-bold leading-tight truncate">Personality &amp; Intelligence Assessment</p>
               <p className="text-[11px] text-muted-foreground leading-tight truncate">{user.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {muted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => { setMuted(false); startMusic(); }}
+              >
+                🔊 Tap for music
+              </Button>
+            )}
             <MusicControls />
             <Button variant="outline" size="sm" onClick={() => { stopMusic(); navigate("/dashboard"); }}>
               <Save className="w-3.5 h-3.5 mr-1" /> Save &amp; Exit
@@ -166,30 +217,48 @@ export default function AssessmentPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-[280px_1fr] gap-6">
+      <div className="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-[300px_1fr] gap-6">
         {/* LEFT — Brain visual */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card className="shadow-elevated border-0 overflow-hidden">
-            <CardContent className="p-5 flex flex-col items-center text-center bg-gradient-to-b from-primary/5 to-background">
-              <BrainLogo size={200} fills={fills} animated />
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mt-4">Your brain map</p>
-              <p className="text-sm font-display font-semibold mt-1">Each section lights up a lobe</p>
-              <div className="mt-4 w-full space-y-1.5 text-left">
+            <CardContent
+              className={`p-5 flex flex-col items-center text-center bg-gradient-to-b ${theme.cardGradient}`}
+            >
+              <BrainLogo size={220} fills={fills} animated activeSection={current.meta.id} />
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mt-4">
+                Now mapping
+              </p>
+              <p className="text-base font-display font-bold mt-1" style={{ color: lobeColor }}>
+                {current.meta.name}
+              </p>
+              <div className="mt-5 w-full space-y-1.5 text-left">
                 {sectionGroups.map((g, idx) => {
                   const pct = Math.round(fills[g.meta.id] * 100);
                   const isCurrent = idx === sectionIdx;
                   const isDone = pct === 100;
+                  const dotColor = SECTION_LOBE_COLORS[g.meta.id];
                   return (
                     <button
                       key={g.meta.id}
                       onClick={() => setSectionIdx(idx)}
-                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors ${
-                        isCurrent ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted text-muted-foreground"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-all ${
+                        isCurrent
+                          ? "bg-primary/10 text-foreground font-semibold shadow-sm"
+                          : "hover:bg-muted text-muted-foreground"
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${isDone ? "bg-emerald-500" : isCurrent ? "bg-primary animate-pulse" : "bg-muted-foreground/30"}`} />
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ring-2 ring-offset-1 ring-offset-background ${
+                          isCurrent ? "animate-pulse" : ""
+                        }`}
+                        style={{
+                          background: dotColor,
+                          // @ts-expect-error — CSS var typing
+                          "--tw-ring-color": isDone ? dotColor : "transparent",
+                        }}
+                      />
                       <span className="flex-1 truncate">{g.meta.name}</span>
-                      {isDone && <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
+                      {isDone && <CheckCircle className="w-3.5 h-3.5" style={{ color: dotColor }} />}
                     </button>
                   );
                 })}
@@ -200,24 +269,56 @@ export default function AssessmentPage() {
 
         {/* RIGHT — Section questions */}
         <main className="space-y-5 animate-fade-in" key={sectionIdx}>
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> Section {current.meta.id}
+          {/* Themed section banner — personality icon + "Are you the next..." hook */}
+          <div
+            className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br ${theme.cardGradient} p-6`}
+          >
+            <div
+              className="absolute -right-6 -top-6 w-32 h-32 rounded-full blur-3xl opacity-40"
+              style={{ background: lobeColor }}
+              aria-hidden
+            />
+            <div className="relative flex items-start gap-4">
+              <div
+                className="shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg"
+                style={{ background: lobeColor + "22", border: `1px solid ${lobeColor}55` }}
+              >
+                {theme.emoji}
+              </div>
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-background/70 backdrop-blur text-[11px] font-semibold mb-2"
+                  style={{ color: lobeColor }}>
+                  <Sparkles className="w-3 h-3" /> {theme.archetype}
+                </div>
+                <h1
+                  className="text-2xl md:text-3xl font-display font-bold leading-tight"
+                  style={{ color: lobeColor }}
+                >
+                  {theme.hookLine}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  <span className="font-semibold text-foreground">{current.meta.name}.</span>{" "}
+                  {theme.tagline}
+                </p>
+              </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold">{current.meta.name}</h1>
-            <p className="text-muted-foreground mt-1">{vibe.tagline}</p>
           </div>
 
           <Card className="shadow-elevated border-0">
             <CardContent className="p-5 md:p-6 space-y-6">
               {current.questions.map((q, qIdx) => (
-                <div key={q.id} className="animate-fade-in" style={{ animationDelay: `${qIdx * 30}ms` }}>
+                <div key={q.id} className="animate-fade-in" style={{ animationDelay: `${qIdx * 25}ms` }}>
                   <div className="flex items-start gap-3 mb-3">
-                    <span className="mt-1 inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
-                      {qIdx + 1}
-                    </span>
+                    {/* Themed bullet (NOT a question number) */}
+                    <span
+                      className="mt-2 inline-block w-2 h-2 rounded-full shrink-0"
+                      style={{ background: lobeColor }}
+                      aria-hidden
+                    />
                     <p className="font-display text-base md:text-lg leading-relaxed flex-1">{q.text}</p>
-                    {responses[q.id] && <CheckCircle className="w-4 h-4 text-emerald-500 mt-2 shrink-0" />}
+                    {responses[q.id] && (
+                      <CheckCircle className="w-4 h-4 mt-2 shrink-0" style={{ color: lobeColor }} />
+                    )}
                   </div>
                   <RadioGroup
                     value={responses[q.id]?.toString() || ""}
@@ -230,17 +331,27 @@ export default function AssessmentPage() {
                         <Label
                           key={i}
                           htmlFor={`q${q.id}-${i + 1}`}
-                          className={`flex flex-col items-center justify-center gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all text-center hover:border-primary/40 ${
+                          className={`flex flex-col items-center justify-center gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all text-center ${
                             selected
-                              ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                              : "border-border bg-muted/30"
+                              ? "shadow-md scale-[1.02]"
+                              : "border-border bg-muted/30 hover:border-foreground/20"
                           }`}
+                          style={
+                            selected
+                              ? {
+                                  borderColor: lobeColor,
+                                  background: lobeColor + "12",
+                                }
+                              : undefined
+                          }
                         >
                           <RadioGroupItem value={(i + 1).toString()} id={`q${q.id}-${i + 1}`} className="sr-only" />
-                          <span className={`text-xs font-bold ${selected ? "text-primary" : "text-muted-foreground"}`}>
-                            {i + 1}
+                          <span
+                            className="text-[11px] leading-tight font-medium"
+                            style={selected ? { color: lobeColor } : undefined}
+                          >
+                            {label}
                           </span>
-                          <span className="text-[11px] leading-tight">{label}</span>
                         </Label>
                       );
                     })}
@@ -256,10 +367,14 @@ export default function AssessmentPage() {
           {/* Section navigation */}
           <div className="flex items-center justify-between gap-3">
             <Button variant="outline" onClick={handlePrev} disabled={sectionIdx === 0} className="gap-1">
-              <ChevronLeft className="w-4 h-4" /> Previous Section
+              <ChevronLeft className="w-4 h-4" /> Previous
             </Button>
             {!isLast ? (
-              <Button onClick={handleNext} className="gradient-primary text-primary-foreground gap-1 hover:scale-105 transition-transform">
+              <Button
+                onClick={handleNext}
+                className="text-white gap-1 hover:scale-105 transition-transform shadow-lg"
+                style={{ background: `linear-gradient(135deg, ${lobeColor}, hsl(var(--primary)))` }}
+              >
                 Next Section <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (
@@ -268,7 +383,7 @@ export default function AssessmentPage() {
                 disabled={!allAnswered}
                 className="gradient-accent text-accent-foreground gap-1 hover:scale-105 transition-transform"
               >
-                <CheckCircle className="w-4 h-4" /> Complete Assessment
+                <CheckCircle className="w-4 h-4" /> Reveal My Insights
               </Button>
             )}
           </div>

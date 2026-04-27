@@ -209,7 +209,8 @@ export function calculateAllResults(responses: Responses, isEmployee: boolean = 
   const learningStyle = calculateLearningStyle(responses);
   const quotients = calculateQuotients(responses);
   const career = calculateCareer(responses);
-  const brainDominance = isEmployee ? calculateBrainDominance(responses) : { left: 50, right: 50 };
+  // Brain dominance is meaningful for every respondent — not just employees.
+  const brainDominance = calculateBrainDominance(responses);
 
   const partial = { disc, mbti, intelligence, learningStyle, quotients, career, brainDominance };
   const swot = calculateSWOT(partial);
