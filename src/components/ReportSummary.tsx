@@ -53,7 +53,8 @@ export default function ReportSummary({ targetUser }: Props) {
   const handleUnlock = () => {
     setUnlocked(true);
     localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
-    setTimeout(() => generateDeepReport(targetUser, results), 200);
+    // Trigger immediately so the PDF downloads in the same user gesture chain.
+    generateDeepReport(targetUser, results);
   };
   const handleDownloadClick = () => {
     if (canDownload) generateDeepReport(targetUser, results);

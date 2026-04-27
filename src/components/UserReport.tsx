@@ -120,8 +120,8 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
   const handleUnlock = () => {
     setUnlocked(true);
     localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
-    // Give the dialog a tick to close, then trigger the download.
-    setTimeout(() => generateDeepReport(targetUser, results), 200);
+    // Trigger the PDF immediately — no extra screen between paying and the download.
+    generateDeepReport(targetUser, results);
   };
   const handleDownloadClick = () => {
     if (canDownload) generateDeepReport(targetUser, results);

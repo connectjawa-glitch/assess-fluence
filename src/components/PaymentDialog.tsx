@@ -79,11 +79,11 @@ export default function PaymentDialog({ open, onOpenChange, onUnlock }: Props) {
   const handlePay = () => {
     // Simulated payment success — wire to Lovable Cloud / Stripe later.
     setSubmitted(true);
-    setTimeout(() => {
-      onUnlock();
-      onOpenChange(false);
-      setSubmitted(false);
-    }, 900);
+    // Close immediately and trigger the download in the same gesture chain so the
+    // browser doesn't re-open the plans dialog or block the file.
+    onOpenChange(false);
+    onUnlock();
+    setSubmitted(false);
   };
 
   return (
