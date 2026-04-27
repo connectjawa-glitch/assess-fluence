@@ -490,13 +490,14 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = explanation(doc, "Intelligence is not a single measure. Modern psychology recognizes multiple dimensions. The four quotients measured here represent different aspects of cognitive and emotional capability.", y);
   y += 2;
 
-  // ★ GAUGE CHARTS: Four Quotients
+  // ★ GAUGE CHARTS: Four Quotients — evenly distributed
   y = ensureSpace(doc, y, 45);
   y = subTitle(doc, "Quotient Scores at a Glance", y);
   const qColors: (readonly [number, number, number])[] = [BLUE, GREEN, AMBER, PURPLE];
+  const qStep = CONTENT_W / 4;
   allScores.forEach((s, i) => {
-    const gx = MARGIN + 22 + i * 42;
-    drawGauge(doc, gx, y + 18, 15, s.val, s.name.split("(")[0].trim(), [...qColors[i]] as [number, number, number]);
+    const gx = MARGIN + qStep / 2 + i * qStep;
+    drawGauge(doc, gx, y + 18, 14, s.val, s.name.split("(")[0].trim(), [...qColors[i]] as [number, number, number]);
   });
   y += 42;
 
