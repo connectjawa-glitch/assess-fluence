@@ -170,6 +170,31 @@ function insightBox(doc: jsPDF, text: string, y: number, color: readonly [number
   return y + boxH + 3;
 }
 
+// "Why we measure this" rationale callout — used at the top of each section
+function whyBox(doc: jsPDF, text: string, y: number, color: readonly [number, number, number] = BLUE): number {
+  y = ensureSpace(doc, y, 22);
+  doc.setFontSize(8.5);
+  const heading = "WHY WE MEASURE THIS";
+  const lines = doc.splitTextToSize(text, CONTENT_W - 16);
+  const boxH = lines.length * 4.2 + 11;
+  const lightBg: [number, number, number] = [
+    Math.round(color[0] * 0.06 + 255 * 0.94),
+    Math.round(color[1] * 0.06 + 255 * 0.94),
+    Math.round(color[2] * 0.06 + 255 * 0.94),
+  ];
+  doc.setFillColor(...lightBg);
+  doc.roundedRect(MARGIN, y - 3, CONTENT_W, boxH, 2, 2, "F");
+  doc.setFillColor(...color);
+  doc.rect(MARGIN, y - 3, 2.5, boxH, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...color);
+  doc.text(heading, MARGIN + 8, y + 1);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(60, 60, 60);
+  let ty = y + 6;
+  for (const line of lines) { doc.text(line, MARGIN + 8, ty); ty += 4.2; }
+  doc.setTextColor(0, 0, 0); doc.setFontSize(10);
+  return y + boxH + 4;
+}
+
 export function generateDeepReport(user: User, results: AssessmentResults) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pw = doc.internal.pageSize.getWidth();
