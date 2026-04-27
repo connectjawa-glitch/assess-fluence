@@ -1035,7 +1035,29 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     doc.text(lines, pw / 2, sy, { align: "center" }); sy += lines.length * 6;
   });
 
-  sy += 15;
+  // ── Left vs Right Brain bars (always visible on summary)
+  sy += 14;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+  doc.text("Brain Hemisphere Balance", pw / 2, sy, { align: "center" });
+  sy += 8;
+  const barW = 120;
+  const barX = (pw - barW) / 2;
+  const leftPct = results.brainDominance.left;
+  const rightPct = results.brainDominance.right;
+  // Track
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
+  // Left fill
+  doc.setFillColor(59, 130, 246); doc.roundedRect(barX, sy, (leftPct / 100) * barW, 6, 2, 2, "F");
+  sy += 11;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+  doc.text(`Left Brain (Logical): ${leftPct}%`, barX, sy);
+  doc.text(`Right Brain (Creative): ${rightPct}%`, barX + barW, sy, { align: "right" });
+  sy += 8;
+  // Right hemisphere bar
+  doc.setFillColor(70, 80, 100); doc.roundedRect(barX, sy, barW, 6, 2, 2, "F");
+  doc.setFillColor(236, 72, 153); doc.roundedRect(barX, sy, (rightPct / 100) * barW, 6, 2, 2, "F");
+  sy += 12;
+
   doc.setFontSize(11); doc.setFont("helvetica", "italic");
   doc.text('"Data alone does not create value."', pw / 2, sy, { align: "center" }); sy += 7;
   doc.text('"Interpretation creates understanding."', pw / 2, sy, { align: "center" }); sy += 7;
