@@ -88,6 +88,34 @@ export default function Index() {
         </div>
       </div>
 
+      {/* Famous personality archetypes — "Which legend matches you?" */}
+      <div className="max-w-6xl mx-auto px-4 pt-12 pb-2">
+        <div className="text-center mb-6">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-2">Which legend lives in you?</p>
+          <h2 className="text-2xl md:text-3xl font-display font-bold">
+            Your <span className="text-gradient">archetype</span> awaits
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
+            Every result maps you to a famous personality — discover whether you think like Musk, lead like Alexander, or create like Da Vinci.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {archetypes.map((a, i) => (
+            <Card
+              key={a.name}
+              className={`shadow-card hover:shadow-elevated transition-all hover:-translate-y-1 animate-fade-in ring-1 ${a.ring}`}
+              style={{ animationDelay: `${i * 70}ms` }}
+            >
+              <CardContent className={`p-4 flex flex-col items-center text-center bg-gradient-to-br ${a.accent} rounded-lg`}>
+                <span className="text-3xl mb-2" aria-hidden>{a.emoji}</span>
+                <p className="text-sm font-display font-bold leading-tight">{a.name}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{a.type}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       {/* Left vs Right Brain teaser */}
       <div className="max-w-5xl mx-auto px-4 py-12">
         <Card className="shadow-elevated border-0 overflow-hidden">
