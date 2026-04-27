@@ -98,14 +98,25 @@ function explanation(doc: jsPDF, text: string, y: number): number {
 }
 
 function boldLabel(doc: jsPDF, label: string, value: string, y: number, x = MARGIN): number {
-  y = ensureSpace(doc, y, 7);
+  doc.setFontSize(10);
+  const labelW = doc.getTextWidth(label) + 1;
+  const availInline = CONTENT_W - labelW - (x - MARGIN);
+  // If the value fits in less than ~25% of the line, it'd look orphaned — wrap below for readability.
+  const inlineLines = doc.splitTextToSize(value, availInline);
+  const wrapBelow = availInline < 40;
+  if (wrapBelow) {
+    y = ensureSpace(doc, y, 7);
+    doc.setFont("helvetica", "bold"); doc.text(label, x, y);
+    doc.setFont("helvetica", "normal"); y += 5;
+    const valLines = doc.splitTextToSize(value, CONTENT_W - (x - MARGIN));
+    for (const line of valLines) { y = ensureSpace(doc, y, 5); doc.text(line, x, y); y += 5; }
+    return y + 1;
+  }
+  y = ensureSpace(doc, y, Math.max(inlineLines.length * 5, 7));
   doc.setFont("helvetica", "bold"); doc.text(label, x, y);
   doc.setFont("helvetica", "normal");
-  const labelW = doc.getTextWidth(label) + 2;
-  const availW = CONTENT_W - labelW - (x - MARGIN);
-  const lines = doc.splitTextToSize(value, availW);
-  doc.text(lines, x + labelW, y);
-  return y + Math.max(lines.length * 5, 6);
+  doc.text(inlineLines, x + labelW, y);
+  return y + Math.max(inlineLines.length * 5, 6);
 }
 
 function bullets(doc: jsPDF, items: string[], x: number, y: number, maxW: number): number {
