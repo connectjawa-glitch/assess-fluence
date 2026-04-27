@@ -396,10 +396,34 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.text("Report powered by Interpretation Engine, Correlation Engine & Recommendation Engine", MARGIN, y);
 
   // ====================================================================
+  // ABBREVIATIONS GLOSSARY — every acronym, defined up front
+  // ====================================================================
+  doc.addPage();
+  doc.setFillColor(...DARK); doc.rect(0, 0, pw, 20, "F");
+  doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+  doc.text("ABBREVIATIONS & KEY TERMS", pw / 2, 13, { align: "center" });
+  doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal");
+  let gy = 35;
+  doc.setFontSize(10); doc.setTextColor(...GRAY);
+  gy = para(doc, "This report uses standard psychology abbreviations. Each one is also expanded the first time it appears in a section, but you can return to this page any time.", MARGIN, gy, CONTENT_W);
+  gy += 4;
+  doc.setTextColor(0, 0, 0);
+  Object.entries(ABBREVIATIONS).forEach(([abbr, full]) => {
+    gy = ensureSpace(doc, gy, 12);
+    doc.setFont("helvetica", "bold"); doc.setTextColor(...BLUE); doc.setFontSize(11);
+    doc.text(abbr, MARGIN, gy);
+    doc.setFont("helvetica", "normal"); doc.setTextColor(40, 40, 40); doc.setFontSize(10);
+    const lines = doc.splitTextToSize(`— ${full}`, CONTENT_W - 28);
+    doc.text(lines, MARGIN + 24, gy);
+    gy += Math.max(6, lines.length * 5) + 2;
+  });
+
+  // ====================================================================
   // SECTION 1: PROFILE SUMMARY (2 pages)
   // ====================================================================
   doc.addPage();
   addPageHeader(doc, 1, "Profile Summary", "Complete Personality & Performance Overview");
+
   y = 36;
 
   y = sectionTitle(doc, "Personal Information", y);
