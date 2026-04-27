@@ -135,11 +135,36 @@ export default function AssessmentPage() {
   // Stop music when leaving page
   useEffect(() => () => stopMusic(), [stopMusic]);
 
+  // Periodic celebrity-comparison popups — fire every 5 answers, but throttle
+  // and pick a non-repeating message so it feels alive but not spammy.
+  const lastCheerRef = useRef<number>(0);
+  const cheerIdxRef = useRef<number>(0);
+  const cheers = [
+    { emoji: "🚀", title: "You're on fire!", desc: "That focus is Elon-Musk level." },
+    { emoji: "👑", title: "Going great!", desc: "Channeling some Alexander-the-Great energy." },
+    { emoji: "🎯", title: "Beautifully done", desc: "Steady like Warren Buffett." },
+    { emoji: "💡", title: "Bright thinking", desc: "Curiosity worthy of Einstein." },
+    { emoji: "🎨", title: "Lovely answers", desc: "A little Da Vinci in you." },
+    { emoji: "✨", title: "You're in the zone", desc: "Oprah-style emotional clarity." },
+    { emoji: "🦅", title: "Strong choices", desc: "Eagle-eyed and decisive." },
+    { emoji: "🌟", title: "Stellar pace", desc: "Steve Jobs would approve." },
+  ];
+
   const handleAnswer = (qid: number, value: string) => {
     if (!user) return;
     const updated = { ...responses, [qid]: parseInt(value) };
     setResponses(updated);
     localStorage.setItem(`mm_responses_${user.id}`, JSON.stringify(updated));
+
+    // Encouragement popup every 5 newly-answered questions, max once per 8s.
+    const answeredCount = Object.keys(updated).length;
+    const now = Date.now();
+    if (answeredCount > 0 && answeredCount % 5 === 0 && now - lastCheerRef.current > 8000) {
+      const cheer = cheers[cheerIdxRef.current % cheers.length];
+      cheerIdxRef.current += 1;
+      lastCheerRef.current = now;
+      toast({ title: `${cheer.emoji} ${cheer.title}`, description: cheer.desc });
+    }
   };
 
   const sectionAnswered = current.questions.every(q => responses[q.id]);
