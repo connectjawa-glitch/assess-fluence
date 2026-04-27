@@ -40,25 +40,25 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
           <Button
             variant="outline"
             size="sm"
-            className="hover:scale-105 transition-transform shrink-0 gap-1.5"
+            className="shrink-0 gap-1.5 border-primary/40 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
             onClick={() => navigate("/pricing")}
             aria-current={pathname === "/pricing"}
           >
             <Sparkles className="w-4 h-4" />
-            <span className="text-xs sm:text-sm">View Plans</span>
+            <span className="text-xs sm:text-sm font-medium">View Plans</span>
           </Button>
 
           {showDashboard && (
             <Button
               variant="outline"
               size="sm"
-              className="hover:scale-105 transition-transform shrink-0 gap-1.5"
+              className="shrink-0 gap-1.5 border-primary/40 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
               onClick={() =>
-                navigate(user.role === "admin" ? "/admin" : "/dashboard")
+                navigate(user!.role === "admin" ? "/admin" : "/dashboard")
               }
             >
               <LayoutDashboard className="w-4 h-4" />
-              <span className="text-xs sm:text-sm">Dashboard</span>
+              <span className="text-xs sm:text-sm font-medium">Dashboard</span>
             </Button>
           )}
 
@@ -66,7 +66,7 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
             <>
               <Button
                 size="sm"
-                className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0 max-w-[7rem] sm:max-w-[10rem] truncate"
+                className="gradient-primary text-primary-foreground hover:opacity-90 shrink-0 max-w-[7rem] sm:max-w-[10rem] truncate font-medium"
                 onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}
               >
                 {user.name.split(" ")[0]}
@@ -74,17 +74,17 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
               <Button
                 variant="outline"
                 size="sm"
-                className="hover:scale-105 transition-transform shrink-0 gap-1.5"
+                className="shrink-0 gap-1.5 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                 onClick={() => { logout(); navigate("/"); }}
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-xs sm:text-sm">Logout</span>
+                <span className="text-xs sm:text-sm font-semibold">Logout</span>
               </Button>
             </>
           ) : (
             <Button
               size="sm"
-              className="gradient-primary text-primary-foreground hover:scale-105 transition-transform shrink-0 gap-1.5"
+              className="gradient-primary text-primary-foreground hover:opacity-90 shrink-0 gap-1.5 font-medium"
               onClick={() => navigate("/login")}
             >
               <LogIn className="w-4 h-4" />
