@@ -416,6 +416,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 2, "Personality Interpretation", "DISC Personality + MBTI Deep Analysis");
   y = 36;
   y = whyBox(doc, "Personality is the lens through which you see and act on the world. We measure DISC and MBTI together because DISC reveals how you behave under pressure (your observable style) while MBTI reveals how you think underneath (your cognitive preferences). Combining them gives a complete picture: who you are AND how you operate.", y, BLUE);
+  y = howMeasuredBox(doc,
+    "DISC: 24 forced-choice scenarios scored across four dimensions (Dominance, Influence, Steadiness, Compliance) — your highest dimension defines your bird archetype. MBTI: 32 paired statements scored on 4 axes (E/I, S/N, T/F, J/P) — the dominant letter on each axis combines into your 4-letter type.",
+    `Your DISC dimension '${discKey}' (${birdName}) scored highest at ${results.disc.percentages[discKey]}% of total points. On MBTI, the four axes resolved as ${results.mbti.type} — each letter is the side where you accumulated the majority of points across the questions for that pair.`,
+    y, BLUE);
 
   y = sectionTitle(doc, "DISC Personality Analysis", y);
   y = explanation(doc, "DISC is a widely-used behavioral assessment developed from the work of psychologist William Moulton Marston. It measures four behavioral dimensions: D (Dominance) = how you handle problems, I (Influence) = how you interact with others, S (Steadiness) = your patience and supportiveness, C (Compliance) = how you approach rules and quality.", y);
@@ -562,6 +566,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 3, "Intelligence Analysis", "IQ  •  EQ  •  AQ  •  CQ — Detailed Interpretation");
   y = 36;
   y = whyBox(doc, "Modern psychology recognises that intelligence is not one-dimensional. IQ alone predicts only ~20% of life success. We measure four quotients because together they predict performance across the full spectrum of work and life: IQ for problem-solving, EQ for relationships, AQ for resilience under pressure, and CQ for innovation. Knowing where you are weakest is the single highest-leverage place to grow.", y, TEAL);
+  y = howMeasuredBox(doc,
+    "Each quotient uses scenario-based items: IQ tests pattern recognition and logical reasoning; EQ tests self/other emotional awareness; AQ tests response to setbacks (Control, Origin, Reach, Endurance); CQ tests fluency, flexibility and originality of ideas. Each quotient is normalised to a 0-100 percentile relative to the calibrated population.",
+    `Your scores: IQ ${results.quotients.IQ}%, EQ ${results.quotients.EQ}%, AQ ${results.quotients.AQ}%, CQ ${results.quotients.CQ}%. The strongest is ${highest.name.split('(')[0].trim()} (${highest.val}%), the weakest is ${lowest.name.split('(')[0].trim()} (${lowest.val}%) — this is your highest-leverage growth target.`,
+    y, TEAL);
 
   y = sectionTitle(doc, "Understanding the Four Quotients", y);
   y = explanation(doc, "Intelligence is not a single measure. Modern psychology recognizes multiple dimensions. The four quotients measured here represent different aspects of cognitive and emotional capability.", y);
@@ -633,6 +641,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 4, "Learning Style Guide", `Dominant: ${results.learningStyle.dominant}`);
   y = 36;
   y = whyBox(doc, "Information enters your brain through three main channels — Visual (seeing), Auditory (hearing) and Kinesthetic (doing). When learning material aligns with your dominant channel, your brain encodes it 2-3x more efficiently. Most people unknowingly fight against their natural channel; identifying yours instantly multiplies how fast you learn at school, on the job, and in life.", y, GREEN);
+  y = howMeasuredBox(doc,
+    "VAK questions ask how you prefer to receive, recall and explain information. Each option ties to one of three channels (Visual / Auditory / Kinesthetic). Points are summed per channel and converted to percentages so the three together always equal 100%.",
+    `Your responses concentrated most heavily on ${results.learningStyle.dominant} cues (${results.learningStyle.percentages[results.learningStyle.dominant]}%) — that's why this channel is named your dominant style. The remaining channels are listed below as secondary supports.`,
+    y, GREEN);
 
   y = sectionTitle(doc, "Understanding Learning Styles", y);
   y = explanation(doc, "Learning style theory, based on the VAK model, identifies three primary channels: Visual (seeing and reading), Auditory (hearing and discussing), and Kinesthetic (touching and doing). Your dominant style indicates the channel most efficient for you.", y);
@@ -695,6 +707,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 5, "Multiple Intelligence Analysis", `Top: ${results.intelligence.top2.join(" & ")}`);
   y = 36;
   y = whyBox(doc, "Howard Gardner's theory shows there are eight distinct kinds of intelligence — not just the linguistic and logical ones schools usually test. We map all eight because your top two intelligences ARE your competitive advantage. Knowing them helps you choose careers, hobbies and relationships where you naturally outperform — instead of grinding against your weaker areas.", y, PURPLE);
+  y = howMeasuredBox(doc,
+    "We map your responses across 8 Gardner intelligences (Linguistic, Logical-Mathematical, Spatial, Bodily-Kinesthetic, Musical, Interpersonal, Intrapersonal, Naturalist). Each item is tagged to one intelligence; raw points are normalised to a 0-100 score per dimension and ranked.",
+    `Your top two by score are ${results.intelligence.top2.join(' and ')} (${results.intelligence.percentages[results.intelligence.top2[0]]}% & ${results.intelligence.percentages[results.intelligence.top2[1]]}%). These are highlighted in purple on the chart — they are your natural cognitive advantage.`,
+    y, PURPLE);
 
   y = sectionTitle(doc, "Howard Gardner's Theory of Multiple Intelligences", y);
   y = explanation(doc, "Developed by Harvard psychologist Howard Gardner in 1983, this framework identifies 8 distinct types of intelligence beyond traditional IQ. Every person has all 8, but each person's unique profile creates their competitive advantage.", y);
@@ -759,6 +775,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 6, "Career Fit Analysis (RIASEC)", `Top: ${results.career.top2.join(" & ")}`);
   y = 36;
   y = whyBox(doc, "John Holland's RIASEC framework — the gold standard used by career counsellors worldwide — proves that career satisfaction comes from matching your personality to a work environment. People in careers aligned with their RIASEC type report ~70% higher engagement and lower burnout. We measure this so you choose work that feels like 'play' rather than work.", y, TEAL);
+  y = howMeasuredBox(doc,
+    "RIASEC items present real work activities and ask which energise you. Each activity maps to one of six themes (Realistic, Investigative, Artistic, Social, Enterprising, Conventional). Theme scores are normalised to 0-100 and ranked; the top two define your career fit code.",
+    `Your top two themes are ${results.career.top2.join(' and ')} (${results.career.percentages[results.career.top2[0]]}% & ${results.career.percentages[results.career.top2[1]]}%). The recommended roles below are derived from the intersection of these themes with your DISC (${birdName}) and MBTI (${results.mbti.type}).`,
+    y, TEAL);
 
   y = sectionTitle(doc, "Holland's RIASEC Career Theory", y);
   y = explanation(doc, "Developed by psychologist John Holland, the RIASEC model categorizes personalities and work environments into 6 types: R = Realistic (practical), I = Investigative (analytical), A = Artistic (creative), S = Social (helping), E = Enterprising (leading), C = Conventional (organizing).", y);
@@ -821,6 +841,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 7, "SWOT Analysis", "Strengths, Weaknesses, Opportunities & Threats");
   y = 36;
   y = whyBox(doc, "SWOT translates everything we measured into a one-page action map. Strengths and Weaknesses are internal (you control them); Opportunities and Threats are external (you respond to them). Generated automatically from your scores, this is the lens used in business strategy worldwide — applied here to YOUR personal strategy.", y, AMBER);
+  y = howMeasuredBox(doc,
+    "SWOT is generated by the Correlation Engine: every quotient >= 70% becomes a Strength, every quotient < 50% becomes a Weakness, your top intelligences and career fit unlock Opportunities, and known risks of your DISC/MBTI archetype surface as Threats.",
+    `Strengths drawn from: ${results.swot.strengths.length} positive markers in your profile. Weaknesses identified from: ${results.swot.weaknesses.length} below-threshold markers. Opportunities and Threats are derived specifically from your ${birdName} (${discKey}) + ${results.mbti.type} combination.`,
+    y, AMBER);
 
   y = sectionTitle(doc, "Understanding SWOT", y);
   y = explanation(doc, "SWOT stands for Strengths, Weaknesses, Opportunities, and Threats. Strengths and Weaknesses are internal factors (within your control), while Opportunities and Threats are external factors.", y);
@@ -877,6 +901,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 8, "Combined Personality Insight", "Cross-Dimensional Correlation Analysis");
   y = 36;
   y = whyBox(doc, "Single dimensions are deceiving — two people with the same MBTI can behave very differently because of their DISC, EQ or learning style. We correlate ALL dimensions here because your unique fingerprint emerges where they intersect. This is the difference between a generic personality blurb and a report that actually describes YOU.", y, PURPLE);
+  y = howMeasuredBox(doc,
+    "The Correlation Engine cross-references your DISC, MBTI, all four quotients, learning style, top intelligences and RIASEC type — looking for amplifying pairs (e.g. high IQ + high AQ = sustained problem-solver) and conflicting pairs (e.g. high D + low EQ = leadership friction).",
+    `Your fingerprint: ${birdName} (${discKey}) + ${results.mbti.type} + ${results.learningStyle.dominant} learner + ${results.intelligence.top2[0]}-led intelligence + ${results.career.top2[0]}-leaning career. The combined radar shows where these intersect.`,
+    y, PURPLE);
 
   y = sectionTitle(doc, "How Multiple Dimensions Create Your Unique Profile", y);
   y = explanation(doc, "Individual dimensions tell only part of the story. The real power comes from combining DISC + MBTI + Quotients + Intelligence + Learning Style into a holistic profile.", y);
@@ -957,6 +985,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 9, "Action Plan", "Short-Term & Long-Term Development Strategies");
   y = 36;
   y = whyBox(doc, "Insight without action is wasted. This plan converts your scores into specific, daily-doable steps focused on your single highest-leverage growth area. Targeting your weakest quotient yields ~3x the impact of polishing your strongest — that's why every recommendation is anchored to your lowest dimension.", y, GREEN);
+  y = howMeasuredBox(doc,
+    "The Recommendation Engine takes your lowest quotient as the primary target, your dominant learning style as the delivery channel, and your top RIASEC themes as the context. It then assembles short-term skill goals, daily micro-habits and behaviour shifts.",
+    `Primary target: ${lowest.name.split('(')[0].trim()} (${lowest.val}%). Channel: ${results.learningStyle.dominant} learning. Context: ${results.career.top2.join(' / ')} careers. Every recommendation below is filtered through these three anchors.`,
+    y, GREEN);
 
   y = sectionTitle(doc, "Personalized Development Strategy", y);
   y = explanation(doc, "This action plan is generated based on your lowest scores, personality gaps, and career alignment. Each recommendation is specific, measurable, and designed for immediate implementation.", y);
@@ -1019,6 +1051,10 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   addPageHeader(doc, 10, "Career Roadmap", `${results.career.top2.join(" & ")} Career Path`);
   y = 36;
   y = whyBox(doc, "Careers unfold over decades, not months. We separate your roadmap into Foundation (0-2y), Growth (2-5y) and Leadership (5-10y) because each phase needs different skills and bets. Building expertise that compounds across phases — instead of jumping randomly — is what creates extraordinary careers.", y, TEAL);
+  y = howMeasuredBox(doc,
+    "Roadmap stages are generated by mapping your top two RIASEC themes to typical career ladders, then layering your DISC leadership style and MBTI growth pattern on top. Each stage suggests skills that compound into the next.",
+    `Your trajectory anchors: ${results.career.top2.join(' & ')} themes, ${birdName} leadership style, ${results.mbti.type} growth pattern. Suggested role at the start of the journey: ${results.career.suggestedRoles[0]}.`,
+    y, TEAL);
 
   y = sectionTitle(doc, "Your Personalized Career Trajectory", y);
   y = explanation(doc, "This career roadmap combines your RIASEC mapping, DISC personality, MBTI type, intelligence profile, and quotient scores into a structured pathway.", y);
