@@ -104,8 +104,29 @@ function InfoCard({ icon, title, children, accent = "blue" }: { icon: string; ti
 }
 
 export default function UserReport({ targetUser, onBack, showBackButton = true }: Props) {
+  const { user: viewer } = useAuth();
   const responses: Responses = JSON.parse(localStorage.getItem(`mm_responses_${targetUser.id}`) || "{}");
   const results: AssessmentResults = calculateAllResults(responses, targetUser.role === "employee");
+
+  // Paywall state — admins see everything, regular users must unlock once per session.
+  const isAdmin = viewer?.role === "admin";
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`pia_unlocked_${targetUser.id}`) === "1";
+  });
+  const [payOpen, setPayOpen] = useState(false);
+
+  const canDownload = isAdmin || unlocked;
+  const handleUnlock = () => {
+    setUnlocked(true);
+    localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
+    // Give the dialog a tick to close, then trigger the download.
+    setTimeout(() => generateDeepReport(targetUser, results), 200);
+  };
+  const handleDownloadClick = () => {
+    if (canDownload) generateDeepReport(targetUser, results);
+    else setPayOpen(true);
+  };
 
   const discData = [
     { name: "D (Dominant)", value: results.disc.percentages.D },
