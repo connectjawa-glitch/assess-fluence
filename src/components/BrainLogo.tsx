@@ -3,207 +3,345 @@ import { cn } from "@/lib/utils";
 interface BrainLogoProps {
   size?: number;
   className?: string;
-  /** Animated pulse + glow + halves drift apart — used on Login & Loading */
+  /** Idle pulse + glow + synapses — used on Login & Loading */
   animated?: boolean;
   /**
-   * Per-section fill (0-1) for the 6 brain "lobes" representing each section.
-   * Order: A,B,C,D,E,F. Used inside the Assessment.
+   * Per-section fill (0-1) for the 6 brain "lobes".
+   * Order: A,B,C,D,E,F.
    */
   fills?: Record<string, number>;
   /** Currently active section id — that lobe gets a stronger outline / glow */
   activeSection?: string;
 }
 
-// Color per assessment section — matches the reference screenshot palette.
-// (Kept as raw HSL because these are content accents, not theme tokens.)
+// Vivid color per assessment section — matches the reference screenshot palette.
 const LOBE_COLORS: Record<string, string> = {
-  A: "hsl(262 83% 65%)",   // DISC          — Violet
-  B: "hsl(190 90% 55%)",   // MBTI          — Cyan
-  C: "hsl(290 80% 60%)",   // Intelligence  — Magenta
-  D: "hsl(150 65% 55%)",   // Learning      — Mint
-  E: "hsl(45 95% 60%)",    // Quotients     — Amber
-  F: "hsl(340 82% 62%)",   // Career        — Rose
+  A: "hsl(262 90% 68%)",   // DISC          — Violet
+  B: "hsl(190 95% 58%)",   // MBTI          — Cyan
+  C: "hsl(295 85% 65%)",   // Intelligence  — Magenta
+  D: "hsl(150 70% 55%)",   // Learning      — Mint
+  E: "hsl(42 100% 62%)",   // Quotients     — Amber
+  F: "hsl(340 88% 65%)",   // Career        — Rose
 };
 
-// Six anatomical-ish lobes laid out on a brain silhouette.
-// Order roughly: A=front-top-left, B=front-top-right, C=mid-left,
-// D=mid-right, E=lower-left (cerebellum-ish), F=lower-right.
+/**
+ * Six anatomical-ish lobes. Designed so adjacent paths share boundaries and
+ * together cover the brain silhouette without gaps. Order:
+ *   A = front-top-left (frontal L)
+ *   B = front-top-right (frontal R)
+ *   C = mid-left (parietal/temporal L)
+ *   D = mid-right (parietal/temporal R)
+ *   E = lower-left (cerebellum / occipital L)
+ *   F = lower-right (cerebellum / occipital R)
+ */
 const LOBES = [
-  { id: "A", d: "M50 16 C68 16 80 28 82 42 L50 46 Z" },
-  { id: "B", d: "M50 16 C32 16 20 28 18 42 L50 46 Z" },
+  { id: "A", d: "M50 14 C32 14 20 26 18 42 L50 46 Z" },
+  { id: "B", d: "M50 14 C68 14 80 26 82 42 L50 46 Z" },
   { id: "C", d: "M18 42 C16 56 22 66 36 70 L50 70 L50 46 Z" },
   { id: "D", d: "M82 42 C84 56 78 66 64 70 L50 70 L50 46 Z" },
   { id: "E", d: "M36 70 C38 80 44 86 50 88 L50 70 Z" },
   { id: "F", d: "M64 70 C62 80 56 86 50 88 L50 70 Z" },
 ];
 
-// Anatomical "gyri" (folds) — soft curved lines drawn over each lobe to make
-// the silhouette read as a real brain.
+/**
+ * Anatomical "gyri" — soft curved lines drawn over the brain so it reads as
+ * a real brain instead of a flat shape. Two passes: a brighter set on top of
+ * filled lobes, plus deeper "sulci" shadows.
+ */
 const GYRI = [
-  "M28 30 C36 26 44 26 50 30",
-  "M50 30 C56 26 64 26 72 30",
-  "M22 44 C30 40 40 42 48 46",
-  "M52 46 C60 42 70 40 78 44",
-  "M28 56 C36 52 44 54 50 58",
-  "M50 58 C56 54 64 52 72 56",
-  "M36 68 C42 66 48 68 50 72",
-  "M50 72 C52 68 58 66 64 68",
+  // Top frontal
+  "M22 28 C30 22 40 22 50 26",
+  "M50 26 C60 22 70 22 78 28",
+  // Mid-band
+  "M18 40 C28 36 40 38 50 42",
+  "M50 42 C60 38 72 36 82 40",
+  // Lower-mid
+  "M22 52 C32 48 42 50 50 54",
+  "M50 54 C58 50 68 48 78 52",
+  // Temporal curls
+  "M26 62 C34 58 42 60 48 64",
+  "M52 64 C58 60 66 58 74 62",
+  // Cerebellum stripes
+  "M38 76 C42 74 46 76 49 78",
+  "M51 78 C54 76 58 74 62 76",
 ];
 
-export function BrainLogo({ size = 96, className, animated = false, fills, activeSection }: BrainLogoProps) {
+const SULCI = [
+  "M28 32 C36 28 44 28 50 32",
+  "M50 32 C56 28 64 28 72 32",
+  "M22 48 C32 44 42 46 50 50",
+  "M50 50 C58 46 68 44 78 48",
+  "M30 60 C38 56 46 58 50 62",
+];
+
+/** Brain stem under the cerebellum — gives it a real "brain" silhouette */
+const BRAIN_STEM = "M46 86 C46 92 48 96 50 98 C52 96 54 92 54 86 Z";
+
+export function BrainLogo({
+  size = 96,
+  className,
+  animated = false,
+  fills,
+  activeSection,
+}: BrainLogoProps) {
   return (
     <div
       className={cn("relative inline-flex items-center justify-center", className)}
       style={{ width: size, height: size }}
     >
+      {/* Outer glow halos — softly pulse in idle mode */}
       {animated && (
         <>
           <span
-            className="absolute inset-0 rounded-full bg-primary/25 blur-3xl animate-pulse"
+            className="absolute inset-0 rounded-full bg-primary/30 blur-3xl animate-pulse"
             aria-hidden
           />
           <span
-            className="absolute inset-3 rounded-full bg-secondary/20 blur-2xl"
+            className="absolute inset-3 rounded-full bg-secondary/25 blur-2xl"
             style={{ animation: "pulse 3.6s ease-in-out infinite 0.6s" }}
             aria-hidden
           />
         </>
       )}
+
+      {/* Active-section colored halo — visible during the assessment */}
+      {activeSection && LOBE_COLORS[activeSection] && (
+        <span
+          className="absolute inset-0 rounded-full blur-3xl opacity-50 transition-colors duration-700"
+          style={{ background: LOBE_COLORS[activeSection] + "55" }}
+          aria-hidden
+        />
+      )}
+
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 100 102"
         width={size}
         height={size}
-        className={cn("relative drop-shadow-md", animated && "animate-[fade-in_.6s_ease-out]")}
+        className={cn("relative drop-shadow-2xl", animated && "animate-[fade-in_.6s_ease-out]")}
       >
         <defs>
           <linearGradient id="brainOutline" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="hsl(217 91% 65%)" />
-            <stop offset="100%" stopColor="hsl(262 83% 65%)" />
+            <stop offset="0%" stopColor="hsl(190 95% 70%)" />
+            <stop offset="100%" stopColor="hsl(262 90% 70%)" />
           </linearGradient>
-          <radialGradient id="brainGlow" cx="50%" cy="50%" r="50%">
+
+          <radialGradient id="brainGlow" cx="50%" cy="50%" r="55%">
             <stop offset="0%" stopColor="hsl(217 91% 60% / 0.30)" />
             <stop offset="100%" stopColor="hsl(217 91% 60% / 0)" />
           </radialGradient>
-          <linearGradient id="brainBase" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="hsl(222 47% 14%)" />
-            <stop offset="100%" stopColor="hsl(222 47% 8%)" />
-          </linearGradient>
-          {/* per-lobe wash gradient — used to make the fill feel layered, not flat */}
+
+          {/* Dark base — the "unmapped" brain reads almost black-blue */}
+          <radialGradient id="brainBase" cx="50%" cy="35%" r="80%">
+            <stop offset="0%" stopColor="hsl(222 47% 18%)" />
+            <stop offset="60%" stopColor="hsl(222 47% 11%)" />
+            <stop offset="100%" stopColor="hsl(222 47% 6%)" />
+          </radialGradient>
+
+          {/* Subtle highlight on top of the brain — gives it volume */}
+          <radialGradient id="brainSheen" cx="40%" cy="20%" r="55%">
+            <stop offset="0%" stopColor="hsl(0 0% 100% / 0.18)" />
+            <stop offset="100%" stopColor="hsl(0 0% 100% / 0)" />
+          </radialGradient>
+
+          {/* Per-lobe wash gradient — layered so the fill has depth */}
           {LOBES.map(l => (
-            <radialGradient key={l.id} id={`fill-${l.id}`} cx="50%" cy="50%" r="65%">
-              <stop offset="0%" stopColor={LOBE_COLORS[l.id]} stopOpacity="0.95" />
-              <stop offset="100%" stopColor={LOBE_COLORS[l.id]} stopOpacity="0.55" />
+            <radialGradient key={l.id} id={`fill-${l.id}`} cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stopColor={LOBE_COLORS[l.id]} stopOpacity="1" />
+              <stop offset="60%" stopColor={LOBE_COLORS[l.id]} stopOpacity="0.85" />
+              <stop offset="100%" stopColor={LOBE_COLORS[l.id]} stopOpacity="0.45" />
             </radialGradient>
           ))}
+
+          {/* Soft inner shadow inside each lobe — depth */}
+          <radialGradient id="lobeDepth" cx="50%" cy="50%" r="70%">
+            <stop offset="60%" stopColor="hsl(0 0% 0% / 0)" />
+            <stop offset="100%" stopColor="hsl(0 0% 0% / 0.3)" />
+          </radialGradient>
+
+          {/* Liquid-fill gradient that animates per active lobe */}
+          <linearGradient id="liquidShimmer" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="hsl(0 0% 100% / 0.4)" />
+            <stop offset="50%" stopColor="hsl(0 0% 100% / 0)" />
+            <stop offset="100%" stopColor="hsl(0 0% 100% / 0.4)" />
+          </linearGradient>
+
+          {/* Brain silhouette mask — used everywhere */}
+          <clipPath id="brainClip">
+            <path d="M50 12 C72 12 86 26 86 46 C86 60 80 70 68 76 C66 84 58 92 50 92 C42 92 34 84 32 76 C20 70 14 60 14 46 C14 26 28 12 50 12 Z" />
+          </clipPath>
         </defs>
 
         {/* Background glow */}
-        <circle cx="50" cy="52" r="46" fill="url(#brainGlow)" />
+        <circle cx="50" cy="52" r="48" fill="url(#brainGlow)" />
 
-        {/* Outline brain shape (dark base so vivid lobes pop like the reference) */}
+        {/* Brain stem (drawn first so it sits behind the brain) */}
+        <path d={BRAIN_STEM} fill="hsl(222 47% 14%)" stroke="url(#brainOutline)" strokeWidth="0.6" opacity="0.85" />
+
+        {/* Outline brain shape — dark base */}
         <path
           d="M50 12 C72 12 86 26 86 46 C86 60 80 70 68 76 C66 84 58 92 50 92 C42 92 34 84 32 76 C20 70 14 60 14 46 C14 26 28 12 50 12 Z"
           fill="url(#brainBase)"
           stroke="url(#brainOutline)"
-          strokeWidth="1.2"
+          strokeWidth="1.4"
         />
 
-        {/* Lobes (clipped to brain) */}
-        <clipPath id="brainClip">
-          <path d="M50 12 C72 12 86 26 86 46 C86 60 80 70 68 76 C66 84 58 92 50 92 C42 92 34 84 32 76 C20 70 14 60 14 46 C14 26 28 12 50 12 Z" />
-        </clipPath>
+        {/* All lobe content is clipped to the brain silhouette */}
         <g clipPath="url(#brainClip)">
+          {/* Sulci shadows — drawn under the fills to suggest depth */}
+          {SULCI.map((d, i) => (
+            <path
+              key={`sulci-${i}`}
+              d={d}
+              fill="none"
+              stroke="hsl(0 0% 0%)"
+              strokeOpacity="0.35"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          ))}
+
+          {/* Lobes */}
           {LOBES.map(lobe => {
             const fill = fills?.[lobe.id] ?? 0;
             const isActive = activeSection === lobe.id;
-            // Base translucent wash so the lobe shape always reads
+            // Smooth ease curve so partial fills already look "alive"
+            const eased = 0.12 + Math.pow(fill, 0.85) * 0.88;
             const baseOpacity = fills
-              ? Math.max(0.10, fill * 0.95)
-              : (animated ? 0.22 : 0.16);
+              ? eased
+              : (animated ? 0.25 : 0.18);
+
             return (
               <g key={lobe.id}>
+                {/* Color wash */}
                 <path
                   d={lobe.d}
                   fill={`url(#fill-${lobe.id})`}
                   opacity={baseOpacity}
-                  style={{ transition: "opacity 1200ms cubic-bezier(.2,.8,.2,1)" }}
+                  style={{
+                    transition: "opacity 1400ms cubic-bezier(.2,.9,.2,1)",
+                    filter: fill > 0 ? `drop-shadow(0 0 1.5px ${LOBE_COLORS[lobe.id]})` : undefined,
+                  }}
                 >
                   {animated && !fills && (
                     <animate
                       attributeName="opacity"
-                      values="0.10;0.34;0.10"
-                      dur={`${2.4 + Math.random() * 2}s`}
+                      values="0.15;0.40;0.15"
+                      dur={`${2.6 + Math.random() * 2}s`}
                       repeatCount="indefinite"
                     />
                   )}
                 </path>
-                {/* active-section accent stroke that breathes */}
+
+                {/* Depth shadow inside the lobe */}
+                <path d={lobe.d} fill="url(#lobeDepth)" opacity={fill > 0 ? 0.45 : 0.2} style={{ transition: "opacity 1200ms ease" }} />
+
+                {/* Active-section accent stroke that breathes */}
                 {isActive && (
-                  <path
-                    d={lobe.d}
-                    fill="none"
-                    stroke={LOBE_COLORS[lobe.id]}
-                    strokeWidth="1.2"
-                    opacity="0.9"
-                  >
-                    <animate
-                      attributeName="opacity"
-                      values="0.4;1;0.4"
-                      dur="2.2s"
-                      repeatCount="indefinite"
-                    />
-                  </path>
+                  <>
+                    <path
+                      d={lobe.d}
+                      fill="none"
+                      stroke={LOBE_COLORS[lobe.id]}
+                      strokeWidth="1.4"
+                      opacity="0.95"
+                    >
+                      <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                    </path>
+                    {/* Liquid shimmer sweeping across the active lobe */}
+                    <path d={lobe.d} fill="url(#liquidShimmer)" opacity="0.5">
+                      <animateTransform
+                        attributeName="transform"
+                        type="translate"
+                        values="-30 0;30 0;-30 0"
+                        dur="3.2s"
+                        repeatCount="indefinite"
+                      />
+                    </path>
+                  </>
                 )}
               </g>
             );
           })}
 
-          {/* Anatomical gyri — soft white folds layered over the lobes */}
+          {/* Bright gyri — drawn ON TOP so they read as folds catching light */}
           {GYRI.map((d, i) => (
             <path
-              key={i}
+              key={`gyri-${i}`}
               d={d}
               fill="none"
               stroke="hsl(0 0% 100%)"
-              strokeOpacity="0.18"
-              strokeWidth="0.8"
+              strokeOpacity="0.22"
+              strokeWidth="0.7"
               strokeLinecap="round"
             />
           ))}
+
+          {/* Glossy sheen on the upper-left — gives the brain volume */}
+          <path
+            d="M50 12 C72 12 86 26 86 46 C86 60 80 70 68 76 C66 84 58 92 50 92 C42 92 34 84 32 76 C20 70 14 60 14 46 C14 26 28 12 50 12 Z"
+            fill="url(#brainSheen)"
+          />
         </g>
 
-        {/* Center divider (left/right brain) */}
+        {/* Center divider (left/right brain) — subtle */}
         <line
           x1="50"
           y1="14"
           x2="50"
           y2="90"
-          stroke="hsl(0 0% 100% / 0.25)"
-          strokeWidth="0.8"
-          strokeDasharray="2 2"
+          stroke="hsl(0 0% 100% / 0.22)"
+          strokeWidth="0.7"
+          strokeDasharray="1.5 2"
         />
 
-        {/* Synapse dots — only when in animated/idle mode */}
-        {animated &&
-          [
-            [30, 34], [70, 34], [40, 54], [60, 54], [35, 70], [65, 70],
-          ].map(([cx, cy], i) => (
-            <circle
-              key={i}
-              cx={cx}
-              cy={cy}
-              r="1.3"
-              fill="hsl(190 90% 65%)"
-              opacity="0.85"
-            >
-              <animate
-                attributeName="opacity"
-                values="0.2;1;0.2"
-                dur={`${1.6 + i * 0.25}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          ))}
+        {/* Synapse dots — firing constantly. In assessment mode they fire on
+            the active lobe more brightly. */}
+        {[
+          { cx: 28, cy: 30, sec: "A" },
+          { cx: 72, cy: 30, sec: "B" },
+          { cx: 26, cy: 54, sec: "C" },
+          { cx: 74, cy: 54, sec: "D" },
+          { cx: 38, cy: 76, sec: "E" },
+          { cx: 62, cy: 76, sec: "F" },
+          { cx: 50, cy: 40, sec: "B" },
+          { cx: 50, cy: 60, sec: "D" },
+        ].map((s, i) => {
+          const isActive = activeSection === s.sec;
+          const fill = fills?.[s.sec] ?? (animated ? 0.5 : 0);
+          const dotColor = LOBE_COLORS[s.sec] ?? "hsl(190 90% 65%)";
+          if (!animated && fill === 0) return null;
+          return (
+            <g key={i}>
+              <circle
+                cx={s.cx}
+                cy={s.cy}
+                r={isActive ? 1.8 : 1.3}
+                fill={dotColor}
+                opacity={isActive ? 0.95 : 0.7}
+              >
+                <animate
+                  attributeName="opacity"
+                  values={isActive ? "0.4;1;0.4" : "0.2;0.85;0.2"}
+                  dur={`${1.2 + i * 0.18}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="r"
+                  values={isActive ? "1.2;2.2;1.2" : "1;1.5;1"}
+                  dur={`${1.2 + i * 0.18}s`}
+                  repeatCount="indefinite"
+                />
+              </circle>
+              {/* Halo around active synapses */}
+              {isActive && (
+                <circle cx={s.cx} cy={s.cy} r="3" fill="none" stroke={dotColor} strokeWidth="0.4" opacity="0.6">
+                  <animate attributeName="r" values="2;5;2" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+                </circle>
+              )}
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
