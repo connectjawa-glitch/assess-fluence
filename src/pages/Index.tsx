@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Brain, Users, BarChart3, FileText, Sparkles, Target, Star, Shield, ArrowRight, Crown } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { BrainLogo } from "@/components/BrainLogo";
+import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const features = [
   { icon: Brain, title: "DISC & MBTI", desc: "Discover your personality type, bird archetype, and communication style with deep explanations" },
@@ -48,44 +49,73 @@ export default function Index() {
 
       {/* Hero */}
       <div className="gradient-hero text-primary-foreground relative overflow-hidden">
-        <div className="absolute inset-0 opacity-40 pointer-events-none">
-          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-cyan-400/40 blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-fuchsia-500/30 blur-3xl" style={{ animation: "pulse 5s ease-in-out infinite 0.5s" }} />
-          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-amber-400/30 blur-3xl" style={{ animation: "pulse 4s ease-in-out infinite 1s" }} />
-          <div className="absolute bottom-20 left-1/4 w-64 h-64 rounded-full bg-emerald-400/25 blur-3xl" style={{ animation: "pulse 6s ease-in-out infinite 2s" }} />
+        {/* Layered colorful glow palette — matches portal's primary/secondary/accent tokens */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-20 -left-20 w-[26rem] h-[26rem] rounded-full bg-cyan-400/30 blur-3xl animate-blob-a" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[34rem] h-[34rem] rounded-full bg-fuchsia-500/25 blur-3xl animate-blob-b" />
+          <div className="absolute -bottom-16 -right-16 w-[28rem] h-[28rem] rounded-full bg-amber-400/25 blur-3xl animate-blob-c" />
+          <div className="absolute bottom-10 left-1/4 w-72 h-72 rounded-full bg-emerald-400/20 blur-3xl animate-blob-a" style={{ animationDelay: "2s" }} />
+          {/* subtle grid sheen */}
+          <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
+               style={{ backgroundImage: "linear-gradient(hsl(0 0% 100% / 0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100% / 0.6) 1px, transparent 1px)", backgroundSize: "44px 44px" }} />
         </div>
-        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
+
+        <div className="max-w-6xl mx-auto px-4 py-20 md:py-28 relative">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="flex justify-center mb-6">
-              <BrainLogo size={110} animated />
+            {/* Perfy brand logo with starting animation + glow ring */}
+            <div className="flex justify-center mb-7">
+              <div className="relative animate-logo-reveal">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400/30 via-fuchsia-500/30 to-amber-400/30 blur-2xl animate-logo-glow" />
+                <div className="relative bg-white rounded-2xl px-6 py-3 shadow-elevated ring-1 ring-white/40">
+                  <img
+                    src={perfyLogo}
+                    alt="Perfy — From effort to impact"
+                    className="h-16 md:h-20 w-auto object-contain"
+                    loading="eager"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400/20 via-primary-foreground/15 to-fuchsia-400/20 border border-primary-foreground/25 text-sm mb-6 animate-fade-in backdrop-blur-sm">
-              <Crown className="w-4 h-4 text-amber-300" /> Research-Backed • Deep Insight Report
+
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400/25 via-primary-foreground/15 to-fuchsia-400/25 border border-primary-foreground/30 text-sm mb-6 animate-fade-in backdrop-blur-md shadow-lg" style={{ animationDelay: "0.4s", animationFillMode: "both" }}>
+              <Crown className="w-4 h-4 text-amber-300" />
+              <span className="tracking-wide">Research-Backed • Deep Insight Report</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-4 leading-tight animate-fade-in">
-              Personality &amp; Intelligence Assessment
+
+            <h1 className="text-4xl md:text-6xl font-display font-bold mb-5 leading-[1.1] tracking-tight animate-fade-in" style={{ animationDelay: "0.55s", animationFillMode: "both" }}>
+              <span className="text-shimmer">Personality &amp; Intelligence</span>
+              <br />
+              <span className="text-primary-foreground/95">Assessment</span>
             </h1>
-            <p className="text-lg md:text-xl opacity-90 mb-3 animate-fade-in font-display italic">
+
+            <p className="text-lg md:text-2xl opacity-95 mb-4 animate-fade-in font-display italic text-amber-100" style={{ animationDelay: "0.7s", animationFillMode: "both" }}>
               {taglines[0]}
             </p>
-            <div className="flex flex-wrap justify-center gap-2 mb-8 animate-fade-in">
+
+            <div className="flex flex-wrap justify-center gap-2 mb-9 animate-fade-in" style={{ animationDelay: "0.85s", animationFillMode: "both" }}>
               {taglines.slice(1).map(t => (
-                <span key={t} className="px-3 py-1 rounded-full bg-primary-foreground/10 text-xs">{t}</span>
+                <span key={t} className="px-3 py-1 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 text-xs">{t}</span>
               ))}
             </div>
-            <div className="flex flex-wrap gap-3 justify-center animate-fade-in">
-              <Button size="lg" className="bg-primary-foreground text-foreground hover:bg-primary-foreground/90 font-display gap-2 hover:scale-105 transition-transform" onClick={() => navigate(user ? "/assessment" : "/register")}>
+
+            <div className="flex flex-wrap gap-3 justify-center animate-fade-in" style={{ animationDelay: "1s", animationFillMode: "both" }}>
+              <Button size="lg" className="bg-gradient-to-r from-amber-300 to-amber-500 text-foreground hover:from-amber-200 hover:to-amber-400 font-display font-semibold gap-2 hover:scale-105 transition-all shadow-elevated" onClick={() => navigate(user ? "/assessment" : "/register")}>
                 {user ? "Take Assessment" : "Get Started"} <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-transform" onClick={() => navigate("/pricing")}>
+              <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-all backdrop-blur-sm" onClick={() => navigate("/pricing")}>
                 <Sparkles className="w-4 h-4 mr-1" /> View Plans
               </Button>
               {!user && (
-                <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-transform" onClick={() => navigate("/login")}>
+                <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-all backdrop-blur-sm" onClick={() => navigate("/login")}>
                   Login
                 </Button>
               )}
             </div>
+
+            {/* Tagline ribbon */}
+            <p className="mt-8 text-xs uppercase tracking-[0.3em] text-primary-foreground/60 animate-fade-in" style={{ animationDelay: "1.15s", animationFillMode: "both" }}>
+              From effort to impact
+            </p>
           </div>
         </div>
       </div>
