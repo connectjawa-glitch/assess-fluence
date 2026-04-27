@@ -20,10 +20,10 @@ const TEAL = [20, 184, 166] as const;
 
 const PH = 297; // A4 height
 const PW_A4 = 210;
-const MARGIN = 18;
-const CONTENT_W = PW_A4 - MARGIN * 2;
+const MARGIN = 16;          // slightly tighter horizontal margin so we never clip
+const CONTENT_W = PW_A4 - MARGIN * 2;   // 178mm of safe content width
 const FOOTER_H = 16;
-const MAX_Y = PH - FOOTER_H - 10;
+const MAX_Y = PH - FOOTER_H - 12;       // extra bottom safety so text never collides with footer
 
 function addPageHeader(doc: jsPDF, sectionNum: number, title: string, subtitle?: string) {
   const pw = doc.internal.pageSize.getWidth();
