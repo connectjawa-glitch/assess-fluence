@@ -767,16 +767,24 @@ export default function UserReport({ targetUser, onBack, showBackButton = true }
       {/* Download footer */}
       <Section delay={650}>
         <div className="flex flex-col items-center gap-4 py-10 border-t">
-          <img src={perfyLogo} alt="Perfy" className="h-12 rounded-xl shadow-md ring-2 ring-primary/10" />
-          <p className="text-sm text-muted-foreground font-medium">Perfy — From Effort to Impact</p>
+          <BrainLogo size={56} />
+          <p className="text-sm text-muted-foreground font-medium">Personality &amp; Intelligence Assessment — From Effort to Impact</p>
+          {!canDownload && (
+            <p className="text-xs text-muted-foreground max-w-md text-center">
+              You're viewing the free overview. Unlock the full 20-page detailed PDF report with brain mapping, action plans, career roadmap and counseling add-ons.
+            </p>
+          )}
           <div className="flex gap-3">
             <Button variant="outline" onClick={handlePrint} className="rounded-xl"><Printer className="w-4 h-4 mr-2" /> Print Report</Button>
-            <Button onClick={() => generateDeepReport(targetUser, results)} className="rounded-xl bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg hover:shadow-xl transition-shadow">
-              <Download className="w-4 h-4 mr-2" /> Download Full Report (PDF)
+            <Button onClick={handleDownloadClick} className="rounded-xl gradient-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
+              {canDownload ? <Download className="w-4 h-4 mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+              {canDownload ? "Download Full Report (PDF)" : "Download Detailed Report"}
             </Button>
           </div>
         </div>
       </Section>
+
+      <PaymentDialog open={payOpen} onOpenChange={setPayOpen} onUnlock={handleUnlock} />
     </div>
   );
 }
