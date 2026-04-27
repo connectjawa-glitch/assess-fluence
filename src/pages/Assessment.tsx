@@ -217,21 +217,23 @@ export default function AssessmentPage() {
           section's color, plus a faint grid mesh. Re-mounts on section change
           so the colors crossfade. */}
       <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" key={`bg-${current.meta.id}`}>
+        {/* Primary blob — always visible */}
         <div
-          className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full blur-3xl opacity-40 animate-blob-a"
+          className="absolute -top-40 -left-40 w-[28rem] h-[28rem] sm:w-[36rem] sm:h-[36rem] rounded-full blur-3xl opacity-40 animate-blob-a"
           style={{ background: `radial-gradient(circle at 30% 30%, ${lobeColor}99, transparent 65%)` }}
         />
+        {/* Secondary + tertiary blobs — desktop only, they're the heaviest paint */}
         <div
-          className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] rounded-full blur-3xl opacity-35 animate-blob-b"
+          className="hidden md:block absolute -bottom-40 -right-32 w-[40rem] h-[40rem] rounded-full blur-3xl opacity-35 animate-blob-b"
           style={{ background: `radial-gradient(circle at 70% 70%, ${lobeColor}88, transparent 65%)` }}
         />
         <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 animate-blob-c"
+          className="hidden md:block absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 animate-blob-c"
           style={{ background: `radial-gradient(circle, ${lobeColor}77, transparent 70%)` }}
         />
-        {/* Faint mesh grid — gives depth */}
+        {/* Faint mesh grid — desktop only */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="hidden md:block absolute inset-0 opacity-[0.06]"
           style={{
             backgroundImage:
               "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
