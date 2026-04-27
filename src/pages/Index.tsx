@@ -247,9 +247,11 @@ export default function Index() {
       </div>
 
       {/* Footer */}
-      <footer className="py-8 text-center text-sm text-muted-foreground border-t">
-        <div className="flex justify-center mb-3"><BrainLogo size={40} /></div>
-        <p>Personality &amp; Intelligence Assessment • From Effort to Impact</p>
+      <footer className="py-8 text-center text-sm text-muted-foreground border-t bg-gradient-to-b from-background to-muted/30">
+        <div className="flex justify-center mb-3">
+          <img src={perfyLogo} alt="Perfy" className="h-10 w-auto object-contain" />
+        </div>
+        <p className="font-display">Personality &amp; Intelligence Assessment • <span className="text-gradient font-semibold">From Effort to Impact</span></p>
       </footer>
     </div>
   );
