@@ -185,11 +185,38 @@ export default function AssessmentPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br ${theme.bgGradient} transition-colors duration-700`}
+      className={`relative min-h-screen bg-gradient-to-br ${theme.bgGradient} transition-colors duration-1000 overflow-hidden`}
       ref={containerRef}
     >
+      {/* Per-section animated background — three slow drifting orbs in the
+          section's color, plus a faint grid mesh. Re-mounts on section change
+          so the colors crossfade. */}
+      <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" key={`bg-${current.meta.id}`}>
+        <div
+          className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full blur-3xl opacity-40 animate-blob-a"
+          style={{ background: `radial-gradient(circle at 30% 30%, ${lobeColor}99, transparent 65%)` }}
+        />
+        <div
+          className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] rounded-full blur-3xl opacity-35 animate-blob-b"
+          style={{ background: `radial-gradient(circle at 70% 70%, ${lobeColor}88, transparent 65%)` }}
+        />
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 animate-blob-c"
+          style={{ background: `radial-gradient(circle, ${lobeColor}77, transparent 70%)` }}
+        />
+        {/* Faint mesh grid — gives depth */}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+      </div>
+
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b shadow-sm">
+      <div className="relative z-20 sticky top-0 bg-card/80 backdrop-blur-xl border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <BrainLogo size={36} fills={fills} activeSection={current.meta.id} />
