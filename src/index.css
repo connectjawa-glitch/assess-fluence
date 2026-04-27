@@ -127,7 +127,13 @@
     0%, 100% { transform: translate(0, 0) scale(1.05); }
     50%      { transform: translate(20px, 40px) scale(0.9); }
   }
-  .animate-blob-a { animation: blob-drift-a 18s ease-in-out infinite; }
-  .animate-blob-b { animation: blob-drift-b 22s ease-in-out infinite; }
-  .animate-blob-c { animation: blob-drift-c 26s ease-in-out infinite; }
+  .animate-blob-a { animation: blob-drift-a 18s ease-in-out infinite; will-change: transform; }
+  .animate-blob-b { animation: blob-drift-b 22s ease-in-out infinite; will-change: transform; }
+  .animate-blob-c { animation: blob-drift-c 26s ease-in-out infinite; will-change: transform; }
+
+  /* Mobile + reduced-motion users: drop expensive looping animations entirely
+     so the page stays smooth and the battery stays alive. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-blob-a, .animate-blob-b, .animate-blob-c { animation: none !important; }
+  }
 }

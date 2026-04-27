@@ -1,133 +1,262 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ArrowLeft, Zap, Star, Crown } from "lucide-react";
-import perfyLogo from "@/assets/perfy-logo.jpeg";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  ArrowLeft, GraduationCap, Briefcase, Building2, Users,
+  Check, Sparkles, Brain,
+} from "lucide-react";
+import AppHeader from "@/components/AppHeader";
 
-const plans = [
-  {
-    name: "Free",
-    price: "₹0",
-    period: "forever",
-    icon: Zap,
-    desc: "Try the assessment with basic results",
-    features: [
-      "199 questions assessment",
-      "Basic profile summary",
-      "DISC & MBTI type only",
-      "Limited report (2 sections)",
-      "No PDF download",
+type Audience = "individual" | "working" | "organization" | "group";
+
+interface AddOn {
+  id: string;
+  label: string;
+  base: number;
+  discountPct?: number;
+  helper?: string;
+  required?: boolean;
+}
+
+const PLANS: Record<Exclude<Audience, "organization" | "group">, { title: string; addons: AddOn[] }> = {
+  individual: {
+    title: "Individual",
+    addons: [
+      { id: "brain", label: "Brain Mapping (Detailed Report)", base: 1000, discountPct: 20, helper: "Full 20-page interpretation report", required: true },
+      { id: "tech",  label: "Technical Counseling Session", base: 500, helper: "1-on-1 session with our specialist" },
+      { id: "career",label: "Course Selection + Career Guidance (School & College)", base: 500, helper: "Personalised academic & career roadmap" },
     ],
-    cta: "Get Started Free",
-    popular: false,
   },
-  {
-    name: "Pro",
-    price: "₹499",
-    period: "per assessment",
-    icon: Star,
-    desc: "Full deep interpretation report",
-    features: [
-      "Everything in Free",
-      "10-section deep report",
-      "All graphs & visualizations",
-      "Detailed explanations for every score",
-      "Correlation & recommendation engines",
-      "PDF download (14+ pages)",
-      "Career roadmap & action plan",
-      "SWOT analysis with expansion",
+  working: {
+    title: "Working Professional",
+    addons: [
+      { id: "brain", label: "Brain Mapping (Detailed Report)", base: 1000, helper: "Full 20-page interpretation report", required: true },
+      { id: "tech",  label: "Technical Counseling Session", base: 500, helper: "1-on-1 session with our specialist" },
     ],
-    cta: "Buy Pro Report",
-    popular: true,
   },
-  {
-    name: "Enterprise",
-    price: "₹2,999",
-    period: "per month",
-    icon: Crown,
-    desc: "For organizations & schools",
-    features: [
-      "Everything in Pro",
-      "Unlimited assessments",
-      "Company/School management",
-      "Company code registration",
-      "Bulk CSV export",
-      "Company-wise aggregate reports",
-      "Admin analytics dashboard",
-      "Priority support",
-      "Custom branding (coming soon)",
-    ],
-    cta: "Contact Sales",
-    popular: false,
-  },
-];
+};
+
+function priceAfter(addon: AddOn, groupDiscount: boolean): number {
+  let p = addon.base;
+  if (addon.discountPct) p = Math.round(p * (1 - addon.discountPct / 100));
+  if (groupDiscount) p = Math.round(p * 0.85);
+  return p;
+}
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const [audience, setAudience] = useState<Audience>("individual");
+  const [selected, setSelected] = useState<Record<string, boolean>>({ brain: true });
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const isContact = audience === "organization";
+  const isGroup = audience === "group";
+  const plan = !isContact ? PLANS[(isGroup ? "individual" : audience) as keyof typeof PLANS] : null;
+
+  const total = useMemo(() => {
+    if (!plan) return 0;
+    return plan.addons.reduce((sum, a) => {
+      if (!selected[a.id] && !a.required) return sum;
+      return sum + priceAfter(a, isGroup);
+    }, 0);
+  }, [plan, selected, isGroup]);
+
+  const handleAudience = (v: string) => {
+    setAudience(v as Audience);
+    setSelected({ brain: true });
+    setSubmitted(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
+      <AppHeader />
+
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <img src={perfyLogo} alt="Perfy" className="h-8 rounded bg-foreground/5 p-0.5" />
-          <h1 className="text-2xl font-display font-bold">Pricing Plans</h1>
+          <h1 className="text-2xl font-display font-bold">Plans &amp; Add-ons</h1>
         </div>
 
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Choose Your Plan</h2>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            From basic personality insights to full enterprise reporting — pick the plan that fits your needs.
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> Pick add-ons. Total updates live.
+          </div>
+          <h2 className="text-3xl md:text-4xl font-display font-bold mb-3">
+            One report. Choose how deep you want to go.
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Brain Mapping is the core deep-dive report. Add Technical Counseling and Career Guidance as
+            optional add-ons. Group of students get an extra 15% off everything.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          {plans.map(plan => (
-            <Card key={plan.name} className={`shadow-card relative overflow-hidden transition-all hover:-translate-y-1 ${plan.popular ? "border-2 border-primary shadow-elevated" : ""}`}>
-              {plan.popular && (
-                <div className="absolute top-0 right-0 gradient-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                  MOST POPULAR
+        <Tabs value={audience} onValueChange={handleAudience}>
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full h-auto mb-6">
+            <TabsTrigger value="individual" className="gap-1.5 text-xs sm:text-sm py-2">
+              <GraduationCap className="w-4 h-4" /> Individual
+            </TabsTrigger>
+            <TabsTrigger value="working" className="gap-1.5 text-xs sm:text-sm py-2">
+              <Briefcase className="w-4 h-4" /> Working
+            </TabsTrigger>
+            <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm py-2">
+              <Building2 className="w-4 h-4" /> Organization
+            </TabsTrigger>
+            <TabsTrigger value="group" className="gap-1.5 text-xs sm:text-sm py-2">
+              <Users className="w-4 h-4" /> Group / Students
+            </TabsTrigger>
+          </TabsList>
+
+          {!isContact && (
+            <TabsContent value={audience} className="space-y-3">
+              {isGroup && (
+                <div className="px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Group of students: an additional <strong>15% off</strong> applied on every add-on below.
                 </div>
               )}
-              <CardHeader className="pb-2 pt-6">
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center mb-3">
-                  <plan.icon className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <CardTitle className="text-xl font-display">{plan.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">{plan.desc}</p>
-                <div className="mt-3">
-                  <span className="text-3xl font-display font-bold text-foreground">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground ml-1">/{plan.period}</span>
-                </div>
+
+              <Card className="border-2 border-primary/20 shadow-elevated">
+                <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-secondary/5">
+                  <CardTitle className="text-base font-display flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-primary" /> {plan!.title} — pick your add-ons
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-2.5">
+                  {plan!.addons.map(a => {
+                    const checked = !!selected[a.id] || !!a.required;
+                    const finalPrice = priceAfter(a, isGroup);
+                    const original = a.base;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => !a.required && setSelected(s => ({ ...s, [a.id]: !s[a.id] }))}
+                        className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+                          checked
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox checked={checked} disabled={a.required} className="mt-1 pointer-events-none" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <p className="font-display font-semibold text-sm">
+                                {a.label}
+                                {a.required && (
+                                  <span className="ml-2 text-[10px] uppercase tracking-wider text-primary">Included</span>
+                                )}
+                                {a.discountPct && (
+                                  <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                    {a.discountPct}% off
+                                  </span>
+                                )}
+                              </p>
+                              <p className="font-bold text-primary tabular-nums">
+                                ₹{finalPrice}
+                                {finalPrice !== original && (
+                                  <span className="ml-2 text-xs text-muted-foreground line-through font-normal">₹{original}</span>
+                                )}
+                              </p>
+                            </div>
+                            {a.helper && <p className="text-xs text-muted-foreground mt-1">{a.helper}</p>}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/30 mt-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Payable</p>
+                      <p className="text-3xl font-display font-bold text-primary tabular-nums">₹{total}</p>
+                      {audience === "individual" && total === 1300 && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Brain Mapping ₹800 + Counseling ₹500 (after 20% off on mapping)</p>
+                      )}
+                    </div>
+                    <Button
+                      size="lg"
+                      className="gradient-primary text-primary-foreground hover:scale-105 transition-transform"
+                      onClick={() => navigate("/register")}
+                      disabled={total === 0}
+                    >
+                      Get Started
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* What's inside */}
+              <Card className="shadow-card">
+                <CardContent className="p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Brain Mapping includes</p>
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                    {[
+                      "Full DISC + MBTI interpretation",
+                      "8 Multiple-Intelligence breakdown",
+                      "IQ • EQ • AQ • CQ deep dive",
+                      "Learning style guide",
+                      "SWOT analysis",
+                      "0-2 / 2-5 / 5-10 year career roadmap",
+                      "Personalised action plan",
+                      "Left vs Right brain dominance",
+                    ].map(f => (
+                      <div key={f} className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" /> <span className="text-muted-foreground">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          <TabsContent value="organization" className="space-y-3">
+            <Card className="border-2 border-primary/20 shadow-elevated">
+              <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-secondary/5">
+                <CardTitle className="text-base font-display flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" /> Organization — Custom Plan
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                <ul className="space-y-2.5 mb-6">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="pt-5 space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Bulk pricing, dedicated dashboard, company-wise analytics, and on-demand counseling
+                  sessions for your team. Tell us about your organization and our sales team will reach
+                  out within one business day.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Your name</Label>
+                    <Input value={contactName} onChange={e => setContactName(e.target.value)} placeholder="Jane Doe" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Work email</Label>
+                    <Input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="jane@company.com" />
+                  </div>
+                </div>
                 <Button
-                  className={`w-full ${plan.popular ? "gradient-primary text-primary-foreground" : ""}`}
-                  variant={plan.popular ? "default" : "outline"}
-                  onClick={() => navigate("/register")}
+                  className="w-full gradient-primary text-primary-foreground"
+                  disabled={!contactName || !contactEmail || submitted}
+                  onClick={() => { setSubmitted(true); setTimeout(() => setSubmitted(false), 1500); }}
                 >
-                  {plan.cta}
+                  {submitted ? "✓ Sent! We'll be in touch." : "Contact Sales Team"}
                 </Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </TabsContent>
+        </Tabs>
 
-        <div className="text-center py-8 border-t">
-          <p className="text-sm text-muted-foreground">
-            All plans include the full 199-question assessment. Reports are generated instantly.
-          </p>
-        </div>
+        <p className="text-center text-xs text-muted-foreground italic mt-8">
+          Secure checkout • Instant report delivery • 100% confidential
+        </p>
       </div>
     </div>
   );

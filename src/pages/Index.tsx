@@ -63,14 +63,16 @@ export default function Index() {
             </div>
             <div className="flex flex-wrap gap-3 justify-center animate-fade-in">
               <Button size="lg" className="bg-primary-foreground text-foreground hover:bg-primary-foreground/90 font-display gap-2 hover:scale-105 transition-transform" onClick={() => navigate(user ? "/assessment" : "/register")}>
-                Take Assessment <ArrowRight className="w-4 h-4" />
+                {user ? "Take Assessment" : "Get Started"} <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:scale-105 transition-transform" onClick={() => navigate("/pricing")}>
+              <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-transform" onClick={() => navigate("/pricing")}>
                 <Sparkles className="w-4 h-4 mr-1" /> View Plans
               </Button>
-              <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:scale-105 transition-transform" onClick={() => navigate(user ? (user.role === "admin" ? "/admin" : "/dashboard") : "/login")}>
-                {user ? "Dashboard" : "Login"}
-              </Button>
+              {!user && (
+                <Button size="lg" className="bg-primary-foreground/15 border border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/25 hover:scale-105 transition-transform" onClick={() => navigate("/login")}>
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </div>

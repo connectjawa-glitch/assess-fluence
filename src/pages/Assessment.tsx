@@ -135,11 +135,36 @@ export default function AssessmentPage() {
   // Stop music when leaving page
   useEffect(() => () => stopMusic(), [stopMusic]);
 
+  // Periodic celebrity-comparison popups — fire every 5 answers, but throttle
+  // and pick a non-repeating message so it feels alive but not spammy.
+  const lastCheerRef = useRef<number>(0);
+  const cheerIdxRef = useRef<number>(0);
+  const cheers = [
+    { emoji: "🚀", title: "You're on fire!", desc: "That focus is Elon-Musk level." },
+    { emoji: "👑", title: "Going great!", desc: "Channeling some Alexander-the-Great energy." },
+    { emoji: "🎯", title: "Beautifully done", desc: "Steady like Warren Buffett." },
+    { emoji: "💡", title: "Bright thinking", desc: "Curiosity worthy of Einstein." },
+    { emoji: "🎨", title: "Lovely answers", desc: "A little Da Vinci in you." },
+    { emoji: "✨", title: "You're in the zone", desc: "Oprah-style emotional clarity." },
+    { emoji: "🦅", title: "Strong choices", desc: "Eagle-eyed and decisive." },
+    { emoji: "🌟", title: "Stellar pace", desc: "Steve Jobs would approve." },
+  ];
+
   const handleAnswer = (qid: number, value: string) => {
     if (!user) return;
     const updated = { ...responses, [qid]: parseInt(value) };
     setResponses(updated);
     localStorage.setItem(`mm_responses_${user.id}`, JSON.stringify(updated));
+
+    // Encouragement popup every 5 newly-answered questions, max once per 8s.
+    const answeredCount = Object.keys(updated).length;
+    const now = Date.now();
+    if (answeredCount > 0 && answeredCount % 5 === 0 && now - lastCheerRef.current > 8000) {
+      const cheer = cheers[cheerIdxRef.current % cheers.length];
+      cheerIdxRef.current += 1;
+      lastCheerRef.current = now;
+      toast({ title: `${cheer.emoji} ${cheer.title}`, description: cheer.desc });
+    }
   };
 
   const sectionAnswered = current.questions.every(q => responses[q.id]);
@@ -192,21 +217,23 @@ export default function AssessmentPage() {
           section's color, plus a faint grid mesh. Re-mounts on section change
           so the colors crossfade. */}
       <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" key={`bg-${current.meta.id}`}>
+        {/* Primary blob — always visible */}
         <div
-          className="absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full blur-3xl opacity-40 animate-blob-a"
+          className="absolute -top-40 -left-40 w-[28rem] h-[28rem] sm:w-[36rem] sm:h-[36rem] rounded-full blur-3xl opacity-40 animate-blob-a"
           style={{ background: `radial-gradient(circle at 30% 30%, ${lobeColor}99, transparent 65%)` }}
         />
+        {/* Secondary + tertiary blobs — desktop only, they're the heaviest paint */}
         <div
-          className="absolute -bottom-40 -right-32 w-[40rem] h-[40rem] rounded-full blur-3xl opacity-35 animate-blob-b"
+          className="hidden md:block absolute -bottom-40 -right-32 w-[40rem] h-[40rem] rounded-full blur-3xl opacity-35 animate-blob-b"
           style={{ background: `radial-gradient(circle at 70% 70%, ${lobeColor}88, transparent 65%)` }}
         />
         <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 animate-blob-c"
+          className="hidden md:block absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 animate-blob-c"
           style={{ background: `radial-gradient(circle, ${lobeColor}77, transparent 70%)` }}
         />
-        {/* Faint mesh grid — gives depth */}
+        {/* Faint mesh grid — desktop only */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="hidden md:block absolute inset-0 opacity-[0.06]"
           style={{
             backgroundImage:
               "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
