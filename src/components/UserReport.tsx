@@ -1,4 +1,5 @@
-import { type User } from "@/lib/auth";
+import { useState } from "react";
+import { type User, useAuth } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +8,14 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area, PolarRadiusAxis
 } from "recharts";
 import { generateDeepReport } from "@/lib/pdfReport";
-import { Download, Printer, ArrowLeft, Brain, Target, BookOpen, Lightbulb, Shield, Rocket, TrendingUp, Users, Star, Zap } from "lucide-react";
+import { Download, Printer, ArrowLeft, Brain, Target, BookOpen, Lightbulb, Shield, Rocket, TrendingUp, Users, Star, Zap, Lock } from "lucide-react";
 import {
   mbtiInterpretations, discInterpretations, intelligenceDescriptions,
   learningStyleDetails, quotientInterpretations, careerTypeDetails,
   generateCorrelationInsight, generateActionPlan, generateCareerRoadmap
 } from "@/lib/interpretations";
-import perfyLogo from "@/assets/perfy-logo.jpeg";
+import { BrainLogo } from "@/components/BrainLogo";
+import PaymentDialog from "@/components/PaymentDialog";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
