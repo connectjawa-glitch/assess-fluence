@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import perfyLogo from "@/assets/perfy-logo.jpeg";
+import { BrainLogo } from "@/components/BrainLogo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -36,14 +36,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-elevated animate-scale-in relative z-10 border-primary/10">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <img
-              src={perfyLogo}
-              alt="Perfy"
-              className="h-24 w-24 rounded-2xl shadow-lg animate-fade-in object-cover"
-            />
+            <BrainLogo size={110} animated />
           </div>
-          <CardTitle className="text-3xl font-display text-gradient animate-fade-in">Sign In</CardTitle>
-          <p className="text-muted-foreground text-sm mt-2 animate-fade-in">Perfy — From Effort to Impact</p>
+          <CardTitle className="text-3xl font-display text-gradient animate-fade-in">Welcome Back</CardTitle>
+          <p className="text-muted-foreground text-sm mt-2 animate-fade-in">Personality &amp; Intelligence Assessment</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
