@@ -211,7 +211,39 @@ function whyBox(doc: jsPDF, text: string, y: number, color: readonly [number, nu
   return y + boxH + 4;
 }
 
-export function generateDeepReport(user: User, results: AssessmentResults) {
+// "How we measure this" + "How we arrived at YOUR answer" callout — explains the method.
+function howMeasuredBox(doc: jsPDF, howWeMeasure: string, howWeGot: string, y: number, color: readonly [number, number, number] = TEAL): number {
+  doc.setFontSize(8.5);
+  const headingA = "HOW WE MEASURE THIS";
+  const headingB = "HOW WE ARRIVED AT YOUR ANSWER";
+  const linesA = doc.splitTextToSize(howWeMeasure, CONTENT_W - 16);
+  const linesB = doc.splitTextToSize(howWeGot, CONTENT_W - 16);
+  const boxH = 6 + linesA.length * 4.2 + 6 + linesB.length * 4.2 + 6;
+  y = ensureSpace(doc, y, boxH + 4);
+  const lightBg: [number, number, number] = [
+    Math.round(color[0] * 0.06 + 255 * 0.94),
+    Math.round(color[1] * 0.06 + 255 * 0.94),
+    Math.round(color[2] * 0.06 + 255 * 0.94),
+  ];
+  doc.setFillColor(...lightBg);
+  doc.roundedRect(MARGIN, y - 3, CONTENT_W, boxH, 2, 2, "F");
+  doc.setFillColor(...color);
+  doc.rect(MARGIN, y - 3, 2.5, boxH, "F");
+
+  let ty = y + 1;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...color);
+  doc.text(headingA, MARGIN + 8, ty); ty += 5;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(60, 60, 60);
+  for (const line of linesA) { doc.text(line, MARGIN + 8, ty); ty += 4.2; }
+  ty += 2;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...color);
+  doc.text(headingB, MARGIN + 8, ty); ty += 5;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(60, 60, 60);
+  for (const line of linesB) { doc.text(line, MARGIN + 8, ty); ty += 4.2; }
+
+  doc.setTextColor(0, 0, 0); doc.setFontSize(10);
+  return y + boxH + 4;
+}
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pw = doc.internal.pageSize.getWidth();
 
