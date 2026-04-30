@@ -158,9 +158,9 @@ export default function CompanyPage() {
     doc.save(`${user.companyName?.replace(/\s+/g, "_")}_Summary.pdf`);
   };
 
-  const downloadEmployeeReport = async (row: EmpRow) => {
+  const downloadEmployeeReport = (row: EmpRow) => {
     if (!row.completed || !row.results) return;
-    await generateDeepReport(row.user, row.results);
+    generateDeepReport(row.user, row.results);
   };
 
   if (!user) return null;
