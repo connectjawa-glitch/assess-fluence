@@ -16,6 +16,7 @@ export default function DashboardPage() {
     if (!user) { navigate("/login"); return; }
     if (user.role === "admin") { navigate("/admin"); return; }
     if (user.role === "company") { navigate("/company"); return; }
+    if (user.role === "institution") { navigate("/institution"); return; }
     setHasCompleted(!!localStorage.getItem(`mm_completed_${user.id}`));
     const responses = JSON.parse(localStorage.getItem(`mm_responses_${user.id}`) || "{}");
     setAnsweredCount(Object.keys(responses).length);

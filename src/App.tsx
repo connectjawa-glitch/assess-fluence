@@ -14,6 +14,7 @@ import Assessment from "./pages/Assessment";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
 import Company from "./pages/Company";
+import Institution from "./pages/Institution";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/results" element={<Results />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/company" element={<Company />} />
+              <Route path="/institution" element={<Institution />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -26,6 +26,7 @@ export default function LoginPage() {
         const dest =
           user.role === "admin" ? "/admin" :
           user.role === "company" ? "/company" :
+          user.role === "institution" ? "/institution" :
           "/dashboard";
         navigate(dest);
       } else {
@@ -142,6 +143,7 @@ export default function LoginPage() {
                 <p>Admin: admin@admin.com</p>
                 <p>Users: john@example.com, sarah@example.com</p>
                 <p>Company Portal: hr@tech001.com, hr@gfl002.com, hr@hf003.com</p>
+                <p>Institution Portal: admin@sch001.com, admin@col002.com, admin@trn003.com</p>
                 <p className="mt-1.5 italic opacity-70">Use any password</p>
               </div>
             </CardContent>

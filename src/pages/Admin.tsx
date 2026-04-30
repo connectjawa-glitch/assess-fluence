@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User, type Company } from "@/lib/auth";
+import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, AreaChart, Area
 } from "recharts";
-import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3 } from "lucide-react";
+import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
@@ -22,7 +22,8 @@ import perfyLogo from "@/assets/perfy-logo.jpeg";
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
 export default function AdminPage() {
-  const { user, logout, getCompanies, addCompany, deleteCompany } = useAuth();
+  const { user, logout, getCompanies, addCompany, deleteCompany,
+    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | "student" | "employee">("all");
@@ -39,6 +40,21 @@ export default function AdminPage() {
   const [newCompanyLocation, setNewCompanyLocation] = useState("");
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
 
+  // Institutions
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [showInstDialog, setShowInstDialog] = useState(false);
+  const [editInstId, setEditInstId] = useState<string | null>(null);
+  const [instName, setInstName] = useState("");
+  const [instCode, setInstCode] = useState("");
+  const [instType, setInstType] = useState<InstitutionType>("School");
+  const [instLocation, setInstLocation] = useState("");
+  const [instPlan, setInstPlan] = useState<InstitutionPlan>("Standard");
+  const [instSeats, setInstSeats] = useState<number>(50);
+  const [instPrice, setInstPrice] = useState<number>(800);
+  const [seatTopUpId, setSeatTopUpId] = useState<string | null>(null);
+  const [seatTopUpQty, setSeatTopUpQty] = useState<number>(25);
+  const [seatTopUpPrice, setSeatTopUpPrice] = useState<number>(800);
+
   // Analytics state
   const [analytics, setAnalytics] = useState<{
     totalUsers: number; completed: number; students: number; employees: number;
@@ -54,6 +70,7 @@ export default function AdminPage() {
     const allUsers: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
     setUsers(allUsers);
     setCompanies(getCompanies());
+    setInstitutions(getInstitutions());
 
     let totalIQ = 0, totalEQ = 0, totalAQ = 0, totalCQ = 0, completedCount = 0;
     const mbtiDist: Record<string, number> = {};
@@ -135,7 +152,11 @@ export default function AdminPage() {
   const filteredUsers = users.filter(u => {
     if (roleFilter !== "all" && u.role !== roleFilter) return false;
     if (companyFilter !== "all" && u.companyCode !== companyFilter) return false;
-    if (searchQuery && !u.name.toLowerCase().includes(searchQuery.toLowerCase()) && !u.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const hay = `${u.name} ${u.email} ${u.companyCode || ""} ${u.companyName || ""} ${u.institutionCode || ""} ${u.institutionName || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 
@@ -163,6 +184,55 @@ export default function AdminPage() {
 
   const handleDeleteCompany = (id: string) => {
     deleteCompany(id);
+    refreshData();
+  };
+
+  const resetInstForm = () => {
+    setEditInstId(null);
+    setInstName(""); setInstCode(""); setInstType("School");
+    setInstLocation(""); setInstPlan("Standard"); setInstSeats(50); setInstPrice(800);
+  };
+
+  const handleSaveInstitution = () => {
+    if (!instName || !instCode) return;
+    if (editInstId) {
+      updateInstitution(editInstId, {
+        name: instName, code: instCode, type: instType, location: instLocation,
+        plan: instPlan, seatsPurchased: instSeats, pricePerSeat: instPrice,
+      });
+    } else {
+      addInstitution({
+        name: instName, code: instCode, type: instType, location: instLocation,
+        plan: instPlan, seatsPurchased: instSeats, pricePerSeat: instPrice, active: true,
+      });
+    }
+    resetInstForm();
+    setShowInstDialog(false);
+    refreshData();
+  };
+
+  const openEditInstitution = (i: Institution) => {
+    setEditInstId(i.id);
+    setInstName(i.name); setInstCode(i.code); setInstType(i.type);
+    setInstLocation(i.location); setInstPlan(i.plan);
+    setInstSeats(i.seatsPurchased); setInstPrice(i.pricePerSeat);
+    setShowInstDialog(true);
+  };
+
+  const handleDeleteInstitution = (id: string) => {
+    if (!confirm("Delete this institution? Existing student accounts will remain but will not be linked to any institution dashboard.")) return;
+    deleteInstitution(id);
+    refreshData();
+  };
+
+  const handleToggleInstitutionActive = (i: Institution) => {
+    updateInstitution(i.id, { active: !i.active });
+    refreshData();
+  };
+
+  const handleTopUpSeats = (id: string) => {
+    addInstitutionSeats(id, seatTopUpQty, seatTopUpPrice);
+    setSeatTopUpId(null);
     refreshData();
   };
 
@@ -281,10 +351,11 @@ export default function AdminPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="w-full justify-start">
+          <TabsList className="w-full justify-start flex-wrap h-auto">
             <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
             <TabsTrigger value="users">👥 Users</TabsTrigger>
             <TabsTrigger value="companies">🏢 Companies</TabsTrigger>
+            <TabsTrigger value="institutions">🏫 Institutions</TabsTrigger>
             <TabsTrigger value="music">🎵 Music</TabsTrigger>
           </TabsList>
 
@@ -579,6 +650,161 @@ export default function AdminPage() {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          {/* INSTITUTIONS TAB */}
+          <TabsContent value="institutions" className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 className="text-lg font-display font-semibold">Institution Management</h3>
+                <p className="text-xs text-muted-foreground">Schools, colleges, coaching centers — manage seats, plans &amp; access.</p>
+              </div>
+              <Dialog open={showInstDialog} onOpenChange={(o) => { setShowInstDialog(o); if (!o) resetInstForm(); }}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gradient-primary text-primary-foreground" onClick={resetInstForm}>
+                    <Plus className="w-4 h-4 mr-1" /> Add Institution
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">{editInstId ? "Edit Institution" : "Add New Institution"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Name <span className="text-destructive">*</span></Label>
+                        <Input value={instName} onChange={e => setInstName(e.target.value)} placeholder="Springfield High School" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Code <span className="text-destructive">*</span></Label>
+                        <Input value={instCode} onChange={e => setInstCode(e.target.value.toUpperCase())} placeholder="SCH001" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Type</Label>
+                        <Select value={instType} onValueChange={(v) => setInstType(v as InstitutionType)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["School","College","Coaching","Training","NGO","Other"] as InstitutionType[]).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Location</Label>
+                        <Input value={instLocation} onChange={e => setInstLocation(e.target.value)} placeholder="City" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Plan</Label>
+                        <Select value={instPlan} onValueChange={(v) => setInstPlan(v as InstitutionPlan)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["Starter","Standard","Pro","Enterprise"] as InstitutionPlan[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Seats</Label>
+                        <Input type="number" min={0} value={instSeats} onChange={e => setInstSeats(parseInt(e.target.value || "0"))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>₹/seat</Label>
+                        <Input type="number" min={0} value={instPrice} onChange={e => setInstPrice(parseInt(e.target.value || "0"))} />
+                      </div>
+                    </div>
+                    <Button onClick={handleSaveInstitution} className="w-full gradient-primary text-primary-foreground" disabled={!instName || !instCode}>
+                      {editInstId ? "Save Changes" : "Create Institution"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {institutions.map(i => {
+                const u = getInstitutionUsage(i.code);
+                const pct = u.purchased ? Math.round((u.used / u.purchased) * 100) : 0;
+                return (
+                  <Card key={i.id} className={`shadow-card ${!i.active ? "opacity-60" : ""}`}>
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-display font-semibold truncate">{i.name}</h4>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">{i.type}</span>
+                            {!i.active && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-semibold">Suspended</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Code: <span className="font-mono font-bold text-primary">{i.code}</span> • {i.plan}
+                          </p>
+                        </div>
+                        <div className="flex gap-0.5 shrink-0">
+                          <Button variant="ghost" size="icon" onClick={() => openEditInstitution(i)} title="Edit">
+                            <Plus className="w-4 h-4 rotate-45" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleToggleInstitutionActive(i)} title={i.active ? "Suspend" : "Activate"}>
+                            {i.active ? <ShieldAlert className="w-4 h-4 text-amber-600" /> : <ShieldCheck className="w-4 h-4 text-green-600" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteInstitution(i.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium">Seats: {u.used} / {u.purchased}</span>
+                          <span className="text-muted-foreground">{u.remaining} left</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div className={`h-full rounded-full ${pct > 90 ? "bg-destructive" : "bg-gradient-to-r from-primary to-secondary"}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">📍 {i.location || "—"} • ₹{i.pricePerSeat}/seat</p>
+                      </div>
+
+                      {seatTopUpId === i.id ? (
+                        <div className="rounded-lg border bg-muted/40 p-2 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase">Add Seats</Label>
+                              <Input type="number" min={1} value={seatTopUpQty} onChange={e => setSeatTopUpQty(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase">₹/seat</Label>
+                              <Input type="number" min={0} value={seatTopUpPrice} onChange={e => setSeatTopUpPrice(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-center font-semibold text-primary">Total: ₹{(seatTopUpQty * seatTopUpPrice).toLocaleString("en-IN")}</p>
+                          <div className="flex gap-1.5">
+                            <Button size="sm" className="flex-1 gradient-primary text-primary-foreground h-8" onClick={() => handleTopUpSeats(i.id)}>Add</Button>
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => setSeatTopUpId(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5">
+                          <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { setSeatTopUpId(i.id); setSeatTopUpPrice(i.pricePerSeat); setSeatTopUpQty(25); }}>
+                            <CreditCard className="w-3.5 h-3.5" /> Top-up Seats
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => { setRoleFilter("student"); setSearchQuery(i.code); setActiveTab("users"); }}>
+                            <Users className="w-3.5 h-3.5" /> Members
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {institutions.length === 0 && (
+                <Card className="md:col-span-2 lg:col-span-3 shadow-card">
+                  <CardContent className="p-10 text-center text-muted-foreground">
+                    <School className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                    <p>No institutions yet. Click <strong>Add Institution</strong> to onboard your first school or college.</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
