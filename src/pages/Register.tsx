@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, GraduationCap, Briefcase, School } from "lucide-react";
+import { Building2, GraduationCap, Briefcase, School, ShieldCheck } from "lucide-react";
 import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 export default function RegisterPage() {
@@ -14,7 +14,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"student" | "employee">("student");
+  const [role, setRole] = useState<"student" | "employee" | "company">("student");
+  const [designation, setDesignation] = useState("");
   const [companyCode, setCompanyCode] = useState("");
   const [department, setDepartment] = useState("");
   const [school, setSchool] = useState("");
@@ -30,17 +31,23 @@ export default function RegisterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (role === "employee" && !companyCode) { setError("Please select your company."); return; }
+    if ((role === "employee" || role === "company") && !companyCode) { setError("Please select your company."); return; }
     if (role === "student" && !school) { setError("Please enter your school/college name."); return; }
 
     const success = register({
       name, email, password, role, phone,
-      companyCode: role === "employee" ? companyCode : undefined,
+      companyCode: (role === "employee" || role === "company") ? companyCode : undefined,
       department: role === "employee" ? department : undefined,
       school: role === "student" ? school : undefined,
+      designation: role === "company" ? designation : undefined,
     });
 
-    if (success) { navigate("/dashboard"); } else { setError("Email already registered or invalid company code."); }
+    if (success) {
+      const dest = role === "company" ? "/company" : "/dashboard";
+      navigate(dest);
+    } else {
+      setError("Email already registered or invalid company code.");
+    }
   };
 
   return (
@@ -61,22 +68,24 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider">I am a</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <button type="button" onClick={() => { setRole("student"); setCompanyCode(""); }}
-                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${role === "student" ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}>
-                  <GraduationCap className={`w-6 h-6 ${role === "student" ? "text-primary" : "text-muted-foreground"}`} />
-                  <div className="text-left">
-                    <p className={`font-semibold text-sm ${role === "student" ? "text-primary" : "text-foreground"}`}>🎓 Student</p>
-                    <p className="text-xs text-muted-foreground">Learning assessment</p>
-                  </div>
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${role === "student" ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}>
+                  <GraduationCap className={`w-5 h-5 ${role === "student" ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className={`font-semibold text-xs ${role === "student" ? "text-primary" : "text-foreground"}`}>🎓 Student</p>
+                  <p className="text-[10px] text-muted-foreground text-center leading-tight">Learning</p>
                 </button>
                 <button type="button" onClick={() => { setRole("employee"); setSchool(""); }}
-                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${role === "employee" ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}>
-                  <Briefcase className={`w-6 h-6 ${role === "employee" ? "text-primary" : "text-muted-foreground"}`} />
-                  <div className="text-left">
-                    <p className={`font-semibold text-sm ${role === "employee" ? "text-primary" : "text-foreground"}`}>💼 Employee</p>
-                    <p className="text-xs text-muted-foreground">Performance system</p>
-                  </div>
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${role === "employee" ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}>
+                  <Briefcase className={`w-5 h-5 ${role === "employee" ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className={`font-semibold text-xs ${role === "employee" ? "text-primary" : "text-foreground"}`}>💼 Employee</p>
+                  <p className="text-[10px] text-muted-foreground text-center leading-tight">Take test</p>
+                </button>
+                <button type="button" onClick={() => { setRole("company"); setSchool(""); }}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${role === "company" ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}>
+                  <ShieldCheck className={`w-5 h-5 ${role === "company" ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className={`font-semibold text-xs ${role === "company" ? "text-primary" : "text-foreground"}`}>🏢 Company</p>
+                  <p className="text-[10px] text-muted-foreground text-center leading-tight">HR / Manager</p>
                 </button>
               </div>
             </div>
