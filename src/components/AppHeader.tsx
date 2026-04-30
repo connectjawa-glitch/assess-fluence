@@ -57,6 +57,7 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
                 navigate(
                   user!.role === "admin" ? "/admin" :
                   user!.role === "company" ? "/company" :
+                  user!.role === "institution" ? "/institution" :
                   "/dashboard"
                 )
               }
@@ -74,6 +75,7 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
                 onClick={() => navigate(
                   user.role === "admin" ? "/admin" :
                   user.role === "company" ? "/company" :
+                  user.role === "institution" ? "/institution" :
                   "/dashboard"
                 )}
               >
