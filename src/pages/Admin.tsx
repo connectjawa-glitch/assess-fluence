@@ -347,10 +347,11 @@ export default function AdminPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="w-full justify-start">
+          <TabsList className="w-full justify-start flex-wrap h-auto">
             <TabsTrigger value="analytics">📊 Analytics</TabsTrigger>
             <TabsTrigger value="users">👥 Users</TabsTrigger>
             <TabsTrigger value="companies">🏢 Companies</TabsTrigger>
+            <TabsTrigger value="institutions">🏫 Institutions</TabsTrigger>
             <TabsTrigger value="music">🎵 Music</TabsTrigger>
           </TabsList>
 
