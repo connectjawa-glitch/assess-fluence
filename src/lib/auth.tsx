@@ -12,12 +12,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "student" | "employee" | "admin";
+  role: "student" | "employee" | "admin" | "company";
   companyCode?: string;
   companyName?: string;
   phone?: string;
   department?: string;
   school?: string;
+  designation?: string; // for company reps (e.g., HR Manager)
 }
 
 interface AuthContextType {
@@ -34,11 +35,12 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: "student" | "employee";
+  role: "student" | "employee" | "company";
   phone?: string;
   companyCode?: string;
   department?: string;
   school?: string;
+  designation?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -74,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("mm_user", JSON.stringify(admin));
       return true;
     }
-    const found = users.find(u => u.email === email);
+    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (found) {
       setUser(found);
       localStorage.setItem("mm_user", JSON.stringify(found));
@@ -88,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (users.find(u => u.email === data.email)) return false;
 
     let companyName: string | undefined;
-    if (data.role === "employee" && data.companyCode) {
+    if ((data.role === "employee" || data.role === "company") && data.companyCode) {
       const companies = getCompanies();
       const company = companies.find(c => c.code === data.companyCode);
       if (!company) return false;
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       companyName,
       department: data.department,
       school: data.school,
+      designation: data.designation,
     };
     users.push(newUser);
     localStorage.setItem("mm_users", JSON.stringify(users));
