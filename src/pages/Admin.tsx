@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User, type Company } from "@/lib/auth";
+import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, AreaChart, Area
 } from "recharts";
-import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3 } from "lucide-react";
+import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
@@ -22,7 +22,8 @@ import perfyLogo from "@/assets/perfy-logo.jpeg";
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
 export default function AdminPage() {
-  const { user, logout, getCompanies, addCompany, deleteCompany } = useAuth();
+  const { user, logout, getCompanies, addCompany, deleteCompany,
+    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | "student" | "employee">("all");
@@ -38,6 +39,21 @@ export default function AdminPage() {
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("");
   const [newCompanyLocation, setNewCompanyLocation] = useState("");
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
+
+  // Institutions
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [showInstDialog, setShowInstDialog] = useState(false);
+  const [editInstId, setEditInstId] = useState<string | null>(null);
+  const [instName, setInstName] = useState("");
+  const [instCode, setInstCode] = useState("");
+  const [instType, setInstType] = useState<InstitutionType>("School");
+  const [instLocation, setInstLocation] = useState("");
+  const [instPlan, setInstPlan] = useState<InstitutionPlan>("Standard");
+  const [instSeats, setInstSeats] = useState<number>(50);
+  const [instPrice, setInstPrice] = useState<number>(800);
+  const [seatTopUpId, setSeatTopUpId] = useState<string | null>(null);
+  const [seatTopUpQty, setSeatTopUpQty] = useState<number>(25);
+  const [seatTopUpPrice, setSeatTopUpPrice] = useState<number>(800);
 
   // Analytics state
   const [analytics, setAnalytics] = useState<{
