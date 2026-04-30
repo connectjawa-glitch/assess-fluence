@@ -70,6 +70,7 @@ export default function AdminPage() {
     const allUsers: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
     setUsers(allUsers);
     setCompanies(getCompanies());
+    setInstitutions(getInstitutions());
 
     let totalIQ = 0, totalEQ = 0, totalAQ = 0, totalCQ = 0, completedCount = 0;
     const mbtiDist: Record<string, number> = {};
