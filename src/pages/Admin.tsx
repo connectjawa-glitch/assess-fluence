@@ -183,6 +183,55 @@ export default function AdminPage() {
     refreshData();
   };
 
+  const resetInstForm = () => {
+    setEditInstId(null);
+    setInstName(""); setInstCode(""); setInstType("School");
+    setInstLocation(""); setInstPlan("Standard"); setInstSeats(50); setInstPrice(800);
+  };
+
+  const handleSaveInstitution = () => {
+    if (!instName || !instCode) return;
+    if (editInstId) {
+      updateInstitution(editInstId, {
+        name: instName, code: instCode, type: instType, location: instLocation,
+        plan: instPlan, seatsPurchased: instSeats, pricePerSeat: instPrice,
+      });
+    } else {
+      addInstitution({
+        name: instName, code: instCode, type: instType, location: instLocation,
+        plan: instPlan, seatsPurchased: instSeats, pricePerSeat: instPrice, active: true,
+      });
+    }
+    resetInstForm();
+    setShowInstDialog(false);
+    refreshData();
+  };
+
+  const openEditInstitution = (i: Institution) => {
+    setEditInstId(i.id);
+    setInstName(i.name); setInstCode(i.code); setInstType(i.type);
+    setInstLocation(i.location); setInstPlan(i.plan);
+    setInstSeats(i.seatsPurchased); setInstPrice(i.pricePerSeat);
+    setShowInstDialog(true);
+  };
+
+  const handleDeleteInstitution = (id: string) => {
+    if (!confirm("Delete this institution? Existing student accounts will remain but will not be linked to any institution dashboard.")) return;
+    deleteInstitution(id);
+    refreshData();
+  };
+
+  const handleToggleInstitutionActive = (i: Institution) => {
+    updateInstitution(i.id, { active: !i.active });
+    refreshData();
+  };
+
+  const handleTopUpSeats = (id: string) => {
+    addInstitutionSeats(id, seatTopUpQty, seatTopUpPrice);
+    setSeatTopUpId(null);
+    refreshData();
+  };
+
   const exportCSV = () => {
     const headers = "Name,Email,Role,Company,Department,Status,DISC,MBTI,IQ,EQ,AQ,CQ,Career1,Career2\n";
     const rows = filteredUsers.map(u => {
