@@ -152,7 +152,11 @@ export default function AdminPage() {
   const filteredUsers = users.filter(u => {
     if (roleFilter !== "all" && u.role !== roleFilter) return false;
     if (companyFilter !== "all" && u.companyCode !== companyFilter) return false;
-    if (searchQuery && !u.name.toLowerCase().includes(searchQuery.toLowerCase()) && !u.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const hay = `${u.name} ${u.email} ${u.companyCode || ""} ${u.companyName || ""} ${u.institutionCode || ""} ${u.institutionName || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 
