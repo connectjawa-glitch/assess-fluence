@@ -124,6 +124,26 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {role === "company" && (
+              <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="w-4 h-4 text-primary" /> Company Portal Access</div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Company <span className="text-destructive">*</span></Label>
+                  <Select value={companyCode} onValueChange={setCompanyCode}>
+                    <SelectTrigger className="h-11"><SelectValue placeholder="Select your company" /></SelectTrigger>
+                    <SelectContent>
+                      {companies.map(c => (<SelectItem key={c.id} value={c.code}><span className="font-medium">{c.name}</span> <span className="text-muted-foreground ml-2">({c.code})</span></SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Designation</Label>
+                  <Input value={designation} onChange={e => setDesignation(e.target.value)} placeholder="e.g., HR Manager, People Lead" className="h-11" />
+                </div>
+                <p className="text-xs text-muted-foreground">You'll be able to view & download reports for all employees in your company.</p>
+              </div>
+            )}
+
             {error && <p className="text-destructive text-sm text-center bg-destructive/5 border border-destructive/20 rounded-md px-3 py-2">{error}</p>}
             <Button type="submit" className="w-full gradient-primary text-primary-foreground h-11 text-sm font-semibold hover:opacity-90">
               🚀 Create Account
