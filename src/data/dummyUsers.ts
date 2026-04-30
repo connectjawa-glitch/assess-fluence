@@ -50,11 +50,12 @@ const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }
 ];
 
 export function initializeDummyData() {
-  if (localStorage.getItem("mm_dummy_v3")) return;
+  if (localStorage.getItem("mm_dummy_v4")) return;
 
-  // Clear old data
+  // Clear old version flags
   localStorage.removeItem("mm_dummy_initialized");
   localStorage.removeItem("mm_dummy_v2");
+  localStorage.removeItem("mm_dummy_v3");
 
   // Initialize companies
   const companies: Company[] = defaultCompanies.map(c => ({ ...c, id: crypto.randomUUID() }));
@@ -69,9 +70,23 @@ export function initializeDummyData() {
     localStorage.setItem(`mm_completed_${user.id}`, "true");
   });
 
+  // Seed a Company Portal rep (HR) for each company
+  companies.forEach((c) => {
+    const rep: User = {
+      id: crypto.randomUUID(),
+      name: `${c.name} HR`,
+      email: `hr@${c.code.toLowerCase()}.com`,
+      role: "company",
+      companyCode: c.code,
+      companyName: c.name,
+      designation: "HR Manager",
+    };
+    users.push(rep);
+  });
+
   const existing: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
-  // Remove old dummy users
-  const nonDummy = existing.filter(e => !dummyProfiles.some(dp => dp.user.email === e.email));
+  const seededEmails = new Set(users.map(u => u.email));
+  const nonDummy = existing.filter(e => !seededEmails.has(e.email));
   localStorage.setItem("mm_users", JSON.stringify([...nonDummy, ...users]));
-  localStorage.setItem("mm_dummy_v3", "true");
+  localStorage.setItem("mm_dummy_v4", "true");
 }

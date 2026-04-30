@@ -54,7 +54,11 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
               size="sm"
               className="shrink-0 gap-1.5 border-primary/40 text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
               onClick={() =>
-                navigate(user!.role === "admin" ? "/admin" : "/dashboard")
+                navigate(
+                  user!.role === "admin" ? "/admin" :
+                  user!.role === "company" ? "/company" :
+                  "/dashboard"
+                )
               }
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -67,7 +71,11 @@ export default function AppHeader({ transparent = false }: { transparent?: boole
               <Button
                 size="sm"
                 className="gradient-primary text-primary-foreground hover:opacity-90 shrink-0 max-w-[7rem] sm:max-w-[10rem] truncate font-medium"
-                onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}
+                onClick={() => navigate(
+                  user.role === "admin" ? "/admin" :
+                  user.role === "company" ? "/company" :
+                  "/dashboard"
+                )}
               >
                 {user.name.split(" ")[0]}
               </Button>
