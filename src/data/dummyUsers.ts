@@ -1,4 +1,4 @@
-import type { User, Company } from "@/lib/auth";
+import type { User, Company, Institution } from "@/lib/auth";
 import type { Responses } from "@/lib/scoring";
 
 function randomAnswer(): number {
@@ -36,30 +36,44 @@ const defaultCompanies: Omit<Company, "id">[] = [
   { name: "HealthFirst Inc", code: "HF003", industry: "Healthcare", location: "San Francisco" },
 ];
 
+const defaultInstitutions: Omit<Institution, "id" | "createdAt" | "active">[] = [
+  { name: "Springfield High School", code: "SCH001", type: "School", location: "Springfield", plan: "Standard", seatsPurchased: 50, pricePerSeat: 800 },
+  { name: "Riverdale College of Arts", code: "COL002", type: "College", location: "Riverdale", plan: "Pro", seatsPurchased: 100, pricePerSeat: 700 },
+  { name: "BrightPath Coaching", code: "TRN003", type: "Coaching", location: "Bengaluru", plan: "Starter", seatsPurchased: 25, pricePerSeat: 900 },
+];
+
 const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }[] = [
-  { user: { name: "John Smith", email: "john@example.com", role: "student", school: "Springfield High School" }, profile: { D: 2, I: 3, S: 5, C: 3, E: 4, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 4, P: 2 } },
+  { user: { name: "John Smith", email: "john@example.com", role: "student", school: "Springfield High School", institutionCode: "SCH001", institutionName: "Springfield High School", grade: "Grade 11" }, profile: { D: 2, I: 3, S: 5, C: 3, E: 4, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 4, P: 2 } },
   { user: { name: "Sarah Johnson", email: "sarah@example.com", role: "student", school: "MIT" }, profile: { D: 4, I: 5, S: 2, C: 2, E: 5, Iv: 1, Se: 2, N: 5, T: 2, F: 4, J: 2, P: 5 } },
   { user: { name: "Michael Chen", email: "michael@example.com", role: "employee", companyCode: "TECH001", companyName: "TechCorp Solutions", department: "Engineering" }, profile: { D: 5, I: 3, S: 2, C: 4, E: 3, Iv: 4, Se: 4, N: 3, T: 5, F: 2, J: 5, P: 1 } },
-  { user: { name: "Emily Davis", email: "emily@example.com", role: "student", school: "Stanford University" }, profile: { D: 2, I: 4, S: 4, C: 3, E: 4, Iv: 3, Se: 2, N: 5, T: 3, F: 4, J: 3, P: 4 } },
+  { user: { name: "Emily Davis", email: "emily@example.com", role: "student", school: "Riverdale College of Arts", institutionCode: "COL002", institutionName: "Riverdale College of Arts", grade: "Year 2" }, profile: { D: 2, I: 4, S: 4, C: 3, E: 4, Iv: 3, Se: 2, N: 5, T: 3, F: 4, J: 3, P: 4 } },
   { user: { name: "David Wilson", email: "david@example.com", role: "employee", companyCode: "GFL002", companyName: "Global Finance Ltd", department: "Analytics" }, profile: { D: 3, I: 2, S: 3, C: 5, E: 2, Iv: 5, Se: 5, N: 2, T: 5, F: 1, J: 5, P: 1 } },
-  { user: { name: "Lisa Anderson", email: "lisa@example.com", role: "student", school: "Harvard University" }, profile: { D: 3, I: 5, S: 3, C: 2, E: 5, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 2, P: 5 } },
+  { user: { name: "Lisa Anderson", email: "lisa@example.com", role: "student", school: "Springfield High School", institutionCode: "SCH001", institutionName: "Springfield High School", grade: "Grade 12" }, profile: { D: 3, I: 5, S: 3, C: 2, E: 5, Iv: 2, Se: 3, N: 4, T: 2, F: 5, J: 2, P: 5 } },
   { user: { name: "James Brown", email: "james@example.com", role: "employee", companyCode: "TECH001", companyName: "TechCorp Solutions", department: "Product" }, profile: { D: 4, I: 4, S: 2, C: 3, E: 4, Iv: 3, Se: 3, N: 4, T: 4, F: 3, J: 4, P: 3 } },
-  { user: { name: "Maria Garcia", email: "maria@example.com", role: "student", school: "Oxford Academy" }, profile: { D: 2, I: 3, S: 5, C: 4, E: 2, Iv: 5, Se: 4, N: 3, T: 3, F: 4, J: 4, P: 3 } },
+  { user: { name: "Maria Garcia", email: "maria@example.com", role: "student", school: "BrightPath Coaching", institutionCode: "TRN003", institutionName: "BrightPath Coaching", grade: "JEE Batch" }, profile: { D: 2, I: 3, S: 5, C: 4, E: 2, Iv: 5, Se: 4, N: 3, T: 3, F: 4, J: 4, P: 3 } },
   { user: { name: "Robert Taylor", email: "robert@example.com", role: "employee", companyCode: "HF003", companyName: "HealthFirst Inc", department: "Research" }, profile: { D: 5, I: 4, S: 1, C: 2, E: 5, Iv: 2, Se: 2, N: 5, T: 3, F: 4, J: 2, P: 5 } },
   { user: { name: "Jennifer Lee", email: "jennifer@example.com", role: "employee", companyCode: "GFL002", companyName: "Global Finance Ltd", department: "Risk" }, profile: { D: 3, I: 3, S: 4, C: 4, E: 3, Iv: 4, Se: 4, N: 3, T: 4, F: 3, J: 4, P: 3 } },
+  { user: { name: "Aarav Mehta", email: "aarav@example.com", role: "student", school: "Riverdale College of Arts", institutionCode: "COL002", institutionName: "Riverdale College of Arts", grade: "Year 1" }, profile: { D: 4, I: 4, S: 3, C: 2, E: 4, Iv: 2, Se: 3, N: 4, T: 3, F: 3, J: 3, P: 4 } },
 ];
 
 export function initializeDummyData() {
-  if (localStorage.getItem("mm_dummy_v4")) return;
+  if (localStorage.getItem("mm_dummy_v5")) return;
 
   // Clear old version flags
-  localStorage.removeItem("mm_dummy_initialized");
-  localStorage.removeItem("mm_dummy_v2");
-  localStorage.removeItem("mm_dummy_v3");
+  ["mm_dummy_initialized", "mm_dummy_v2", "mm_dummy_v3", "mm_dummy_v4"].forEach(k => localStorage.removeItem(k));
 
-  // Initialize companies
+  // Companies
   const companies: Company[] = defaultCompanies.map(c => ({ ...c, id: crypto.randomUUID() }));
   localStorage.setItem("mm_companies", JSON.stringify(companies));
+
+  // Institutions
+  const institutions: Institution[] = defaultInstitutions.map(i => ({
+    ...i,
+    id: crypto.randomUUID(),
+    active: true,
+    createdAt: new Date().toISOString(),
+  }));
+  localStorage.setItem("mm_institutions", JSON.stringify(institutions));
 
   const users: User[] = [];
   dummyProfiles.forEach((dp) => {
@@ -70,9 +84,9 @@ export function initializeDummyData() {
     localStorage.setItem(`mm_completed_${user.id}`, "true");
   });
 
-  // Seed a Company Portal rep (HR) for each company
+  // Company Reps
   companies.forEach((c) => {
-    const rep: User = {
+    users.push({
       id: crypto.randomUUID(),
       name: `${c.name} HR`,
       email: `hr@${c.code.toLowerCase()}.com`,
@@ -80,13 +94,25 @@ export function initializeDummyData() {
       companyCode: c.code,
       companyName: c.name,
       designation: "HR Manager",
-    };
-    users.push(rep);
+    });
+  });
+
+  // Institution Reps
+  institutions.forEach((i) => {
+    users.push({
+      id: crypto.randomUUID(),
+      name: `${i.name} Admin`,
+      email: `admin@${i.code.toLowerCase()}.com`,
+      role: "institution",
+      institutionCode: i.code,
+      institutionName: i.name,
+      designation: i.type === "School" ? "Principal" : i.type === "College" ? "Dean" : "Coordinator",
+    });
   });
 
   const existing: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
   const seededEmails = new Set(users.map(u => u.email));
   const nonDummy = existing.filter(e => !seededEmails.has(e.email));
   localStorage.setItem("mm_users", JSON.stringify([...nonDummy, ...users]));
-  localStorage.setItem("mm_dummy_v4", "true");
+  localStorage.setItem("mm_dummy_v5", "true");
 }
