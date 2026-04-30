@@ -23,7 +23,11 @@ export default function LoginPage() {
     setTimeout(() => {
       if (login(email, password)) {
         const user = JSON.parse(localStorage.getItem("mm_user") || "{}");
-        navigate(user.role === "admin" ? "/admin" : "/dashboard");
+        const dest =
+          user.role === "admin" ? "/admin" :
+          user.role === "company" ? "/company" :
+          "/dashboard";
+        navigate(dest);
       } else {
         setError("Invalid credentials. Try a demo email or register.");
         setLoading(false);
@@ -137,6 +141,7 @@ export default function LoginPage() {
                 <p className="font-semibold mb-1.5 text-foreground">Demo Accounts:</p>
                 <p>Admin: admin@admin.com</p>
                 <p>Users: john@example.com, sarah@example.com</p>
+                <p>Company Portal: hr@tech001.com, hr@gfl002.com, hr@hf003.com</p>
                 <p className="mt-1.5 italic opacity-70">Use any password</p>
               </div>
             </CardContent>
