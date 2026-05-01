@@ -192,15 +192,51 @@ export default function AdminPage() {
 
   const handleAddCompany = () => {
     if (!newCompanyName || !newCompanyCode) return;
-    addCompany({ name: newCompanyName, code: newCompanyCode, industry: newCompanyIndustry, location: newCompanyLocation });
+    addCompany({
+      name: newCompanyName,
+      code: newCompanyCode,
+      industry: newCompanyIndustry,
+      location: newCompanyLocation,
+      seatsPurchased: newCompanySeats,
+      pricePerSeat: newCompanyPrice,
+      active: true,
+    });
     setNewCompanyName(""); setNewCompanyCode(""); setNewCompanyIndustry(""); setNewCompanyLocation("");
+    setNewCompanySeats(50); setNewCompanyPrice(800);
     setShowCompanyDialog(false);
     refreshData();
   };
 
   const handleDeleteCompany = (id: string) => {
+    if (!confirm("Delete this company? Employee accounts will remain but lose company linkage.")) return;
     deleteCompany(id);
     refreshData();
+  };
+
+  const handleCompanyTopUp = (id: string) => {
+    addCompanySeats(id, companyTopUpQty, companyTopUpPrice);
+    setCompanyTopUpId(null);
+    refreshData();
+  };
+
+  // ---------- Trial access ----------
+  const handleCreateTrial = () => {
+    if (!trialEmail) return;
+    const t = createTrialAccess({
+      email: trialEmail, name: trialName, days: trialDays, role: trialRole, note: trialNote,
+    });
+    const link = `${window.location.origin}/login?email=${encodeURIComponent(t.email)}&trial=1`;
+    setLastTrialLink(link);
+    setTrialEmail(""); setTrialName(""); setTrialNote("");
+    refreshData();
+  };
+  const handleRevokeTrial = (id: string) => {
+    if (!confirm("Revoke this trial access?")) return;
+    revokeTrialAccess(id);
+    refreshData();
+  };
+  const copyToClipboard = (s: string) => {
+    navigator.clipboard?.writeText(s);
   };
 
   const resetInstForm = () => {
