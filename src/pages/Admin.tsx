@@ -86,6 +86,7 @@ export default function AdminPage() {
     setUsers(allUsers);
     setCompanies(getCompanies());
     setInstitutions(getInstitutions());
+    setTrials(getTrialAccesses());
 
     let totalIQ = 0, totalEQ = 0, totalAQ = 0, totalCQ = 0, completedCount = 0;
     const mbtiDist: Record<string, number> = {};
