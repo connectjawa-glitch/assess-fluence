@@ -91,6 +91,11 @@ export default function LoginPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-2xl md:text-3xl font-display text-gradient">Welcome Back</CardTitle>
               <p className="text-muted-foreground text-sm mt-1">Sign in to continue your journey</p>
+              {trial && (
+                <div className="mt-3 rounded-lg border-2 border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 flex items-center gap-2 animate-fade-in">
+                  <KeyRound className="w-3.5 h-3.5" /> <span><strong>Trial access detected.</strong> Sign in with any password — your account is auto-created and your report is unlocked.</span>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
