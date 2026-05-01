@@ -22,8 +22,9 @@ import perfyLogo from "@/assets/perfy-logo.jpeg";
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
 export default function AdminPage() {
-  const { user, logout, getCompanies, addCompany, deleteCompany,
-    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage } = useAuth();
+  const { user, logout, getCompanies, addCompany, updateCompany, deleteCompany, addCompanySeats, getCompanyUsage,
+    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage,
+    getTrialAccesses, createTrialAccess, revokeTrialAccess } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | "student" | "employee">("all");
