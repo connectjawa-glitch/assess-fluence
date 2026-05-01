@@ -6,6 +6,20 @@ export interface Company {
   code: string;
   industry: string;
   location: string;
+  seatsPurchased?: number;
+  pricePerSeat?: number;
+  active?: boolean;
+}
+
+export interface TrialAccess {
+  id: string;
+  email: string;
+  name?: string;
+  days: number;
+  createdAt: string;   // ISO
+  expiresAt: string;   // ISO
+  note?: string;
+  role?: "student" | "employee";
 }
 
 export type InstitutionType = "School" | "College" | "Coaching" | "Training" | "NGO" | "Other";
