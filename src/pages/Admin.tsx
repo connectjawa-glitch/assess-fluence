@@ -689,14 +689,17 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {companies.map(c => {
                 const stats = analytics.companyStats[c.code];
+                const cu = getCompanyUsage(c.code);
+                const pct = cu.purchased ? Math.round((cu.used / cu.purchased) * 100) : 0;
                 return (
                   <Card key={c.id} className="shadow-card">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-display font-semibold">{c.name}</h4>
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0">
+                          <h4 className="font-display font-semibold truncate">{c.name}</h4>
                           <p className="text-xs text-muted-foreground">
                             Code: <span className="font-mono font-bold text-primary">{c.code}</span>
+                            {cu.purchased > 0 && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">PAID PLAN</span>}
                           </p>
                         </div>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteCompany(c.id)}>
@@ -710,14 +713,55 @@ export default function AdminPage() {
                           <p>📊 Avg IQ: {stats.avgIQ}% • EQ: {stats.avgEQ}%</p>
                         )}
                       </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setCompanyFilter(c.code); setActiveTab("users"); }}>
-                          <Users className="w-3 h-3 mr-1" /> View Users
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => exportCompanyReport(c.code)}>
-                          <Download className="w-3 h-3 mr-1" /> Report
-                        </Button>
-                      </div>
+
+                      {cu.purchased > 0 ? (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium">Seats: {cu.used} / {cu.purchased}</span>
+                            <span className="text-muted-foreground">{cu.remaining} left</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div className={`h-full rounded-full ${pct > 90 ? "bg-destructive" : "bg-gradient-to-r from-primary to-secondary"}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">₹{c.pricePerSeat || 0}/seat</p>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                          No bulk plan — employees will pay individually for reports.
+                        </p>
+                      )}
+
+                      {companyTopUpId === c.id ? (
+                        <div className="rounded-lg border bg-muted/40 p-2 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase">Add Seats</Label>
+                              <Input type="number" min={1} value={companyTopUpQty} onChange={e => setCompanyTopUpQty(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase">₹/seat</Label>
+                              <Input type="number" min={0} value={companyTopUpPrice} onChange={e => setCompanyTopUpPrice(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-center font-semibold text-primary">Total: ₹{(companyTopUpQty * companyTopUpPrice).toLocaleString("en-IN")}</p>
+                          <div className="flex gap-1.5">
+                            <Button size="sm" className="flex-1 gradient-primary text-primary-foreground h-8" onClick={() => handleCompanyTopUp(c.id)}>Add</Button>
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => setCompanyTopUpId(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5 flex-wrap">
+                          <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { setCompanyTopUpId(c.id); setCompanyTopUpPrice(c.pricePerSeat || 800); setCompanyTopUpQty(25); }}>
+                            <CreditCard className="w-3.5 h-3.5" /> Top-up Seats
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => { setCompanyFilter(c.code); setActiveTab("users"); }}>
+                            <Users className="w-3.5 h-3.5" /> Users
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => exportCompanyReport(c.code)}>
+                            <Download className="w-3.5 h-3.5" /> Report
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
