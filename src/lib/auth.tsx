@@ -247,6 +247,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("mm_user", JSON.stringify(found));
       return true;
     }
+    // Try trial-access link (admin-issued, no payment, time-bound)
+    const trial = getTrialAccesses().find(t => t.email.toLowerCase() === email.toLowerCase());
+    if (trial) {
+      if (new Date(trial.expiresAt).getTime() < Date.now()) return false;
+      // Auto-create a temporary student account, marked as trial + auto-paid.
+      const newUser: User = {
+        id: crypto.randomUUID(),
+        name: trial.name || email.split("@")[0],
+        email: trial.email,
+        role: trial.role || "student",
+      };
+      users.push(newUser);
+      localStorage.setItem("mm_users", JSON.stringify(users));
+      // Auto-unlock report (trial bypass)
+      localStorage.setItem(`pia_unlocked_${newUser.id}`, "1");
+      localStorage.setItem(`mm_trial_user_${newUser.id}`, trial.expiresAt);
+      setUser(newUser);
+      localStorage.setItem("mm_user", JSON.stringify(newUser));
+      return true;
+    }
     return false;
   };
 
@@ -256,9 +276,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let companyName: string | undefined;
     if ((data.role === "employee" || data.role === "company") && data.companyCode) {
-      const company = getCompanies().find(c => c.code === data.companyCode);
+      const company = findCompanyByCode(data.companyCode);
       if (!company) return false;
+      if (company.active === false) return false;
       companyName = company.name;
+      // Enforce seats for employees joining a paid company plan
+      if (data.role === "employee" && (company.seatsPurchased || 0) > 0) {
+        const { remaining } = getCompanyUsage(company.code);
+        if (remaining <= 0) return false;
+      }
     }
 
     let institutionName: string | undefined;
@@ -268,7 +294,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!inst) return false;
       if (!inst.active) return false;
       institutionName = inst.name;
-      // Seat enforcement only for student role
       if (data.role === "student") {
         const { remaining } = getInstitutionUsage(inst.code);
         if (remaining <= 0) return false;
@@ -292,6 +317,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     users.push(newUser);
     localStorage.setItem("mm_users", JSON.stringify(users));
+
+    // BULK PAID AUTO-UNLOCK: members of a paid company / institution don't pay again.
+    const companyForUser = data.companyCode ? findCompanyByCode(data.companyCode) : undefined;
+    const isCompanyPaid = !!(companyForUser && (companyForUser.seatsPurchased || 0) > 0);
+    const instForUser = data.institutionCode ? getInstitutions().find(i => i.code === data.institutionCode) : undefined;
+    const isInstPaid = !!(instForUser && instForUser.seatsPurchased > 0);
+    if (isCompanyPaid || isInstPaid) {
+      localStorage.setItem(`pia_unlocked_${newUser.id}`, "1");
+    }
+
     setUser(newUser);
     localStorage.setItem("mm_user", JSON.stringify(newUser));
     return true;
@@ -306,9 +341,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user, login, register, logout,
-        getCompanies, addCompany, deleteCompany,
+        getCompanies, addCompany, updateCompany, deleteCompany,
+        addCompanySeats, getCompanyUsage, findCompanyByCode,
         getInstitutions, addInstitution, updateInstitution, deleteInstitution,
         addInstitutionSeats, getInstitutionUsage,
+        getTrialAccesses, createTrialAccess, revokeTrialAccess,
       }}
     >
       {children}
