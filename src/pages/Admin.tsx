@@ -408,6 +408,7 @@ export default function AdminPage() {
             <TabsTrigger value="users">👥 Users</TabsTrigger>
             <TabsTrigger value="companies">🏢 Companies</TabsTrigger>
             <TabsTrigger value="institutions">🏫 Institutions</TabsTrigger>
+            <TabsTrigger value="trial">🪪 Trial Access</TabsTrigger>
             <TabsTrigger value="music">🎵 Music</TabsTrigger>
           </TabsList>
 
