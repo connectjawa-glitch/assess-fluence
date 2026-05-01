@@ -39,7 +39,21 @@ export default function AdminPage() {
   const [newCompanyCode, setNewCompanyCode] = useState("");
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("");
   const [newCompanyLocation, setNewCompanyLocation] = useState("");
+  const [newCompanySeats, setNewCompanySeats] = useState<number>(50);
+  const [newCompanyPrice, setNewCompanyPrice] = useState<number>(800);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
+  const [companyTopUpId, setCompanyTopUpId] = useState<string | null>(null);
+  const [companyTopUpQty, setCompanyTopUpQty] = useState<number>(25);
+  const [companyTopUpPrice, setCompanyTopUpPrice] = useState<number>(800);
+
+  // Trial access
+  const [trials, setTrials] = useState<TrialAccess[]>([]);
+  const [trialEmail, setTrialEmail] = useState("");
+  const [trialName, setTrialName] = useState("");
+  const [trialDays, setTrialDays] = useState<number>(1);
+  const [trialRole, setTrialRole] = useState<"student" | "employee">("student");
+  const [trialNote, setTrialNote] = useState("");
+  const [lastTrialLink, setLastTrialLink] = useState<string>("");
 
   // Institutions
   const [institutions, setInstitutions] = useState<Institution[]>([]);
