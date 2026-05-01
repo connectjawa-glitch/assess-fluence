@@ -1,20 +1,25 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { BrainLogo } from "@/components/BrainLogo";
-import { ArrowRight, Mail, Lock, Sparkles, Shield } from "lucide-react";
+import { ArrowRight, Mail, Lock, Sparkles, Shield, KeyRound } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [searchParams] = useSearchParams();
+  const trial = searchParams.get("trial") === "1";
+  const prefillEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(prefillEmail);
+  const [password, setPassword] = useState(trial ? "trial" : "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => { if (prefillEmail) setEmail(prefillEmail); }, [prefillEmail]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
