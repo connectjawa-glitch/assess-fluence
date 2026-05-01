@@ -107,14 +107,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ---------------- Companies ----------------
   const getCompanies = (): Company[] => JSON.parse(localStorage.getItem("mm_companies") || "[]");
-  const addCompany = (company: Omit<Company, "id">) => {
+  const saveCompanies = (list: Company[]) =>
+    localStorage.setItem("mm_companies", JSON.stringify(list));
+
+  const findCompanyByCode = (code: string) =>
+    getCompanies().find(c => c.code.toLowerCase() === (code || "").toLowerCase());
+
+  const addCompany: AuthContextType["addCompany"] = (company) => {
     const cs = getCompanies();
-    cs.push({ ...company, id: crypto.randomUUID() });
-    localStorage.setItem("mm_companies", JSON.stringify(cs));
+    const created: Company = {
+      id: crypto.randomUUID(),
+      seatsPurchased: company.seatsPurchased ?? 0,
+      pricePerSeat: company.pricePerSeat ?? 0,
+      active: company.active ?? true,
+      ...company,
+    };
+    cs.push(created);
+    saveCompanies(cs);
+    return created;
+  };
+  const updateCompany = (id: string, patch: Partial<Company>) => {
+    saveCompanies(getCompanies().map(c => (c.id === id ? { ...c, ...patch } : c)));
   };
   const deleteCompany = (id: string) => {
-    const cs = getCompanies().filter(c => c.id !== id);
-    localStorage.setItem("mm_companies", JSON.stringify(cs));
+    saveCompanies(getCompanies().filter(c => c.id !== id));
+  };
+  const addCompanySeats = (id: string, seats: number, pricePerSeat?: number) => {
+    saveCompanies(
+      getCompanies().map(c =>
+        c.id === id
+          ? {
+              ...c,
+              seatsPurchased: (c.seatsPurchased || 0) + Math.max(0, seats),
+              pricePerSeat: pricePerSeat ?? c.pricePerSeat,
+            }
+          : c
+      )
+    );
+  };
+  const getCompanyUsage = (code: string) => {
+    const company = findCompanyByCode(code);
+    const purchased = company?.seatsPurchased || 0;
+    const users: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
+    const used = users.filter(u => u.role === "employee" && u.companyCode === code).length;
+    return { used, purchased, remaining: Math.max(0, purchased - used) };
+  };
+
+  // ---------------- Trial Access ----------------
+  const getTrialAccesses = (): TrialAccess[] =>
+    JSON.parse(localStorage.getItem("mm_trial_access") || "[]");
+  const saveTrials = (list: TrialAccess[]) =>
+    localStorage.setItem("mm_trial_access", JSON.stringify(list));
+  const createTrialAccess: AuthContextType["createTrialAccess"] = (data) => {
+    const list = getTrialAccesses();
+    const now = new Date();
+    const expires = new Date(now.getTime() + Math.max(1, data.days) * 86400_000);
+    const trial: TrialAccess = {
+      id: crypto.randomUUID(),
+      email: data.email.toLowerCase(),
+      name: data.name,
+      days: data.days,
+      role: data.role || "student",
+      note: data.note,
+      createdAt: now.toISOString(),
+      expiresAt: expires.toISOString(),
+    };
+    // Replace any existing trial for the same email
+    const filtered = list.filter(t => t.email !== trial.email);
+    filtered.push(trial);
+    saveTrials(filtered);
+    return trial;
+  };
+  const revokeTrialAccess = (id: string) => {
+    saveTrials(getTrialAccesses().filter(t => t.id !== id));
   };
 
   // ---------------- Institutions ----------------
