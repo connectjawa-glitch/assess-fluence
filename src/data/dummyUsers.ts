@@ -114,5 +114,5 @@ export function initializeDummyData() {
   const seededEmails = new Set(users.map(u => u.email));
   const nonDummy = existing.filter(e => !seededEmails.has(e.email));
   localStorage.setItem("mm_users", JSON.stringify([...nonDummy, ...users]));
-  localStorage.setItem("mm_dummy_v5", "true");
+  localStorage.setItem("mm_dummy_v6", "true");
 }
