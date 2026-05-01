@@ -40,7 +40,18 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     if ((role === "employee" || role === "company") && !companyCode) {
-      setError("Please select your company."); return;
+      setError("Please enter your company code."); return;
+    }
+    if (role === "employee" && companyCode) {
+      const c = findCompanyByCode(companyCode);
+      if (!c) { setError("Invalid company code. Please confirm with your HR."); return; }
+      const cu = getCompanyUsage(c.code);
+      if (cu.purchased > 0 && cu.remaining <= 0) {
+        setError("Your company's seat plan is full. Please ask HR to top up seats."); return;
+      }
+    }
+    if (role === "company" && companyCode && !findCompanyByCode(companyCode)) {
+      setError("Invalid company code. Please contact the platform admin."); return;
     }
     if (role === "institution" && !institutionCode) {
       setError("Please select your institution."); return;
