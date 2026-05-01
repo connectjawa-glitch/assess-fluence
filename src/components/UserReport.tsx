@@ -104,19 +104,39 @@ function InfoCard({ icon, title, children, accent = "blue" }: { icon: string; ti
 }
 
 export default function UserReport({ targetUser, onBack, showBackButton = true }: Props) {
-  const { user: viewer } = useAuth();
+  const { user: viewer, findCompanyByCode, getInstitutions } = useAuth();
   const responses: Responses = JSON.parse(localStorage.getItem(`mm_responses_${targetUser.id}`) || "{}");
   const results: AssessmentResults = calculateAllResults(responses, targetUser.role === "employee");
 
   // Paywall state — admins see everything, regular users must unlock once per session.
+  // BULK PAID BYPASS: members of a company/institution with a paid seat plan are auto-unlocked.
   const isAdmin = viewer?.role === "admin";
+
+  const isBulkPaid = (() => {
+    if (targetUser.companyCode) {
+      const c = findCompanyByCode?.(targetUser.companyCode);
+      if (c && (c.seatsPurchased || 0) > 0) return true;
+    }
+    if (targetUser.institutionCode) {
+      const inst = getInstitutions?.().find(i => i.code === targetUser.institutionCode);
+      if (inst && inst.seatsPurchased > 0) return true;
+    }
+    return false;
+  })();
+
   const [unlocked, setUnlocked] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return localStorage.getItem(`pia_unlocked_${targetUser.id}`) === "1";
+    if (localStorage.getItem(`pia_unlocked_${targetUser.id}`) === "1") return true;
+    return false;
   });
+
+  // Persist auto-unlock once we know it's bulk paid (so future sessions don't recompute).
+  if (isBulkPaid && !unlocked && typeof window !== "undefined") {
+    localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
+  }
   const [payOpen, setPayOpen] = useState(false);
 
-  const canDownload = isAdmin || unlocked;
+  const canDownload = isAdmin || unlocked || isBulkPaid;
   const handleUnlock = () => {
     setUnlocked(true);
     localStorage.setItem(`pia_unlocked_${targetUser.id}`, "1");
