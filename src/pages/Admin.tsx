@@ -659,6 +659,25 @@ export default function AdminPage() {
                         <Input value={newCompanyLocation} onChange={e => setNewCompanyLocation(e.target.value)} placeholder="New York" />
                       </div>
                     </div>
+                    <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Bulk Seat Plan</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Seats Purchased</Label>
+                          <Input type="number" min={0} value={newCompanySeats} onChange={e => setNewCompanySeats(parseInt(e.target.value || "0"))} placeholder="50" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">₹ / seat</Label>
+                          <Input type="number" min={0} value={newCompanyPrice} onChange={e => setNewCompanyPrice(parseInt(e.target.value || "0"))} placeholder="800" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-center text-primary font-semibold">
+                        Total: ₹{(newCompanySeats * newCompanyPrice).toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Once paid, all employees registering with this code consume a seat — they will <strong>not</strong> be asked to pay again to download their report.
+                      </p>
+                    </div>
                     <Button onClick={handleAddCompany} className="w-full gradient-primary text-primary-foreground" disabled={!newCompanyName || !newCompanyCode}>
                       Create Company
                     </Button>
