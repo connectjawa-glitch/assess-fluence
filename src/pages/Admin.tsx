@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan } from "@/lib/auth";
+import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan, type TrialAccess } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, AreaChart, Area
 } from "recharts";
-import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard } from "lucide-react";
+import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard, Copy, KeyRound, Clock } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
@@ -22,8 +22,9 @@ import perfyLogo from "@/assets/perfy-logo.jpeg";
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
 export default function AdminPage() {
-  const { user, logout, getCompanies, addCompany, deleteCompany,
-    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage } = useAuth();
+  const { user, logout, getCompanies, addCompany, updateCompany, deleteCompany, addCompanySeats, getCompanyUsage,
+    getInstitutions, addInstitution, updateInstitution, deleteInstitution, addInstitutionSeats, getInstitutionUsage,
+    getTrialAccesses, createTrialAccess, revokeTrialAccess } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | "student" | "employee">("all");
@@ -38,7 +39,21 @@ export default function AdminPage() {
   const [newCompanyCode, setNewCompanyCode] = useState("");
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("");
   const [newCompanyLocation, setNewCompanyLocation] = useState("");
+  const [newCompanySeats, setNewCompanySeats] = useState<number>(50);
+  const [newCompanyPrice, setNewCompanyPrice] = useState<number>(800);
   const [showCompanyDialog, setShowCompanyDialog] = useState(false);
+  const [companyTopUpId, setCompanyTopUpId] = useState<string | null>(null);
+  const [companyTopUpQty, setCompanyTopUpQty] = useState<number>(25);
+  const [companyTopUpPrice, setCompanyTopUpPrice] = useState<number>(800);
+
+  // Trial access
+  const [trials, setTrials] = useState<TrialAccess[]>([]);
+  const [trialEmail, setTrialEmail] = useState("");
+  const [trialName, setTrialName] = useState("");
+  const [trialDays, setTrialDays] = useState<number>(1);
+  const [trialRole, setTrialRole] = useState<"student" | "employee">("student");
+  const [trialNote, setTrialNote] = useState("");
+  const [lastTrialLink, setLastTrialLink] = useState<string>("");
 
   // Institutions
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -71,6 +86,7 @@ export default function AdminPage() {
     setUsers(allUsers);
     setCompanies(getCompanies());
     setInstitutions(getInstitutions());
+    setTrials(getTrialAccesses());
 
     let totalIQ = 0, totalEQ = 0, totalAQ = 0, totalCQ = 0, completedCount = 0;
     const mbtiDist: Record<string, number> = {};
@@ -176,15 +192,51 @@ export default function AdminPage() {
 
   const handleAddCompany = () => {
     if (!newCompanyName || !newCompanyCode) return;
-    addCompany({ name: newCompanyName, code: newCompanyCode, industry: newCompanyIndustry, location: newCompanyLocation });
+    addCompany({
+      name: newCompanyName,
+      code: newCompanyCode,
+      industry: newCompanyIndustry,
+      location: newCompanyLocation,
+      seatsPurchased: newCompanySeats,
+      pricePerSeat: newCompanyPrice,
+      active: true,
+    });
     setNewCompanyName(""); setNewCompanyCode(""); setNewCompanyIndustry(""); setNewCompanyLocation("");
+    setNewCompanySeats(50); setNewCompanyPrice(800);
     setShowCompanyDialog(false);
     refreshData();
   };
 
   const handleDeleteCompany = (id: string) => {
+    if (!confirm("Delete this company? Employee accounts will remain but lose company linkage.")) return;
     deleteCompany(id);
     refreshData();
+  };
+
+  const handleCompanyTopUp = (id: string) => {
+    addCompanySeats(id, companyTopUpQty, companyTopUpPrice);
+    setCompanyTopUpId(null);
+    refreshData();
+  };
+
+  // ---------- Trial access ----------
+  const handleCreateTrial = () => {
+    if (!trialEmail) return;
+    const t = createTrialAccess({
+      email: trialEmail, name: trialName, days: trialDays, role: trialRole, note: trialNote,
+    });
+    const link = `${window.location.origin}/login?email=${encodeURIComponent(t.email)}&trial=1`;
+    setLastTrialLink(link);
+    setTrialEmail(""); setTrialName(""); setTrialNote("");
+    refreshData();
+  };
+  const handleRevokeTrial = (id: string) => {
+    if (!confirm("Revoke this trial access?")) return;
+    revokeTrialAccess(id);
+    refreshData();
+  };
+  const copyToClipboard = (s: string) => {
+    navigator.clipboard?.writeText(s);
   };
 
   const resetInstForm = () => {
@@ -356,6 +408,7 @@ export default function AdminPage() {
             <TabsTrigger value="users">👥 Users</TabsTrigger>
             <TabsTrigger value="companies">🏢 Companies</TabsTrigger>
             <TabsTrigger value="institutions">🏫 Institutions</TabsTrigger>
+            <TabsTrigger value="trial">🪪 Trial Access</TabsTrigger>
             <TabsTrigger value="music">🎵 Music</TabsTrigger>
           </TabsList>
 
@@ -606,6 +659,25 @@ export default function AdminPage() {
                         <Input value={newCompanyLocation} onChange={e => setNewCompanyLocation(e.target.value)} placeholder="New York" />
                       </div>
                     </div>
+                    <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Bulk Seat Plan</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Seats Purchased</Label>
+                          <Input type="number" min={0} value={newCompanySeats} onChange={e => setNewCompanySeats(parseInt(e.target.value || "0"))} placeholder="50" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">₹ / seat</Label>
+                          <Input type="number" min={0} value={newCompanyPrice} onChange={e => setNewCompanyPrice(parseInt(e.target.value || "0"))} placeholder="800" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-center text-primary font-semibold">
+                        Total: ₹{(newCompanySeats * newCompanyPrice).toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Once paid, all employees registering with this code consume a seat — they will <strong>not</strong> be asked to pay again to download their report.
+                      </p>
+                    </div>
                     <Button onClick={handleAddCompany} className="w-full gradient-primary text-primary-foreground" disabled={!newCompanyName || !newCompanyCode}>
                       Create Company
                     </Button>
@@ -617,14 +689,17 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {companies.map(c => {
                 const stats = analytics.companyStats[c.code];
+                const cu = getCompanyUsage(c.code);
+                const pct = cu.purchased ? Math.round((cu.used / cu.purchased) * 100) : 0;
                 return (
                   <Card key={c.id} className="shadow-card">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-display font-semibold">{c.name}</h4>
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0">
+                          <h4 className="font-display font-semibold truncate">{c.name}</h4>
                           <p className="text-xs text-muted-foreground">
                             Code: <span className="font-mono font-bold text-primary">{c.code}</span>
+                            {cu.purchased > 0 && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">PAID PLAN</span>}
                           </p>
                         </div>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteCompany(c.id)}>
@@ -638,14 +713,55 @@ export default function AdminPage() {
                           <p>📊 Avg IQ: {stats.avgIQ}% • EQ: {stats.avgEQ}%</p>
                         )}
                       </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button variant="outline" size="sm" className="flex-1" onClick={() => { setCompanyFilter(c.code); setActiveTab("users"); }}>
-                          <Users className="w-3 h-3 mr-1" /> View Users
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => exportCompanyReport(c.code)}>
-                          <Download className="w-3 h-3 mr-1" /> Report
-                        </Button>
-                      </div>
+
+                      {cu.purchased > 0 ? (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium">Seats: {cu.used} / {cu.purchased}</span>
+                            <span className="text-muted-foreground">{cu.remaining} left</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div className={`h-full rounded-full ${pct > 90 ? "bg-destructive" : "bg-gradient-to-r from-primary to-secondary"}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">₹{c.pricePerSeat || 0}/seat</p>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                          No bulk plan — employees will pay individually for reports.
+                        </p>
+                      )}
+
+                      {companyTopUpId === c.id ? (
+                        <div className="rounded-lg border bg-muted/40 p-2 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase">Add Seats</Label>
+                              <Input type="number" min={1} value={companyTopUpQty} onChange={e => setCompanyTopUpQty(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase">₹/seat</Label>
+                              <Input type="number" min={0} value={companyTopUpPrice} onChange={e => setCompanyTopUpPrice(parseInt(e.target.value || "0"))} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-center font-semibold text-primary">Total: ₹{(companyTopUpQty * companyTopUpPrice).toLocaleString("en-IN")}</p>
+                          <div className="flex gap-1.5">
+                            <Button size="sm" className="flex-1 gradient-primary text-primary-foreground h-8" onClick={() => handleCompanyTopUp(c.id)}>Add</Button>
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => setCompanyTopUpId(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5 flex-wrap">
+                          <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { setCompanyTopUpId(c.id); setCompanyTopUpPrice(c.pricePerSeat || 800); setCompanyTopUpQty(25); }}>
+                            <CreditCard className="w-3.5 h-3.5" /> Top-up Seats
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => { setCompanyFilter(c.code); setActiveTab("users"); }}>
+                            <Users className="w-3.5 h-3.5" /> Users
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => exportCompanyReport(c.code)}>
+                            <Download className="w-3.5 h-3.5" /> Report
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -806,6 +922,121 @@ export default function AdminPage() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* TRIAL ACCESS TAB */}
+          <TabsContent value="trial" className="space-y-4">
+            <div>
+              <h3 className="text-lg font-display font-semibold">Temporary Trial Access</h3>
+              <p className="text-xs text-muted-foreground">
+                Generate a no-payment login link for any email. Auto-expires after the chosen number of days.
+                Reports auto-unlock for trial users.
+              </p>
+            </div>
+
+            <Card className="shadow-card">
+              <CardContent className="p-5 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Email <span className="text-destructive">*</span></Label>
+                    <Input type="email" value={trialEmail} onChange={e => setTrialEmail(e.target.value)} placeholder="reviewer@example.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Display Name</Label>
+                    <Input value={trialName} onChange={e => setTrialName(e.target.value)} placeholder="Optional" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Valid for (days) <span className="text-destructive">*</span></Label>
+                    <Input type="number" min={1} max={365} value={trialDays} onChange={e => setTrialDays(parseInt(e.target.value || "1"))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Role</Label>
+                    <Select value={trialRole} onValueChange={(v) => setTrialRole(v as "student" | "employee")}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Note (internal)</Label>
+                  <Input value={trialNote} onChange={e => setTrialNote(e.target.value)} placeholder="e.g., Demo for ABC School principal" />
+                </div>
+                <Button onClick={handleCreateTrial} className="w-full gradient-primary text-primary-foreground" disabled={!trialEmail || trialDays < 1}>
+                  <KeyRound className="w-4 h-4 mr-1.5" /> Generate Trial Link
+                </Button>
+
+                {lastTrialLink && (
+                  <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50 p-3 space-y-2 animate-fade-in">
+                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">✓ Link generated — share this</p>
+                    <div className="flex gap-2">
+                      <Input readOnly value={lastTrialLink} className="text-xs font-mono bg-background" />
+                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(lastTrialLink)}>
+                        <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-emerald-700">
+                      The user logs in with this email (any password). The account is auto-created on first login and the report is unlocked without payment.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-display">Active Trial Accesses ({trials.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {trials.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-6">No trial links yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Email</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Role</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Days</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Expires</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Status</th>
+                          <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {trials.map(t => {
+                          const expired = new Date(t.expiresAt).getTime() < Date.now();
+                          const link = `${window.location.origin}/login?email=${encodeURIComponent(t.email)}&trial=1`;
+                          return (
+                            <tr key={t.id} className="border-b hover:bg-muted/40">
+                              <td className="py-2 px-2 font-medium">{t.email}{t.name && <span className="text-xs text-muted-foreground ml-1">({t.name})</span>}</td>
+                              <td className="py-2 px-2 capitalize text-xs">{t.role}</td>
+                              <td className="py-2 px-2 text-xs">{t.days}d</td>
+                              <td className="py-2 px-2 text-xs"><Clock className="inline w-3 h-3 mr-1" />{new Date(t.expiresAt).toLocaleDateString()} {new Date(t.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                              <td className="py-2 px-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${expired ? "bg-destructive/10 text-destructive" : "bg-emerald-100 text-emerald-700"}`}>
+                                  {expired ? "Expired" : "Active"}
+                                </span>
+                              </td>
+                              <td className="py-2 px-2 text-right">
+                                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(link)}>
+                                  <Copy className="w-3.5 h-3.5 mr-1" /> Copy Link
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleRevokeTrial(t.id)}>
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* MUSIC TAB */}

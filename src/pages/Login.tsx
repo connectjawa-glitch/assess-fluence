@@ -1,20 +1,25 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { BrainLogo } from "@/components/BrainLogo";
-import { ArrowRight, Mail, Lock, Sparkles, Shield } from "lucide-react";
+import { ArrowRight, Mail, Lock, Sparkles, Shield, KeyRound } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [searchParams] = useSearchParams();
+  const trial = searchParams.get("trial") === "1";
+  const prefillEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(prefillEmail);
+  const [password, setPassword] = useState(trial ? "trial" : "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => { if (prefillEmail) setEmail(prefillEmail); }, [prefillEmail]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +91,11 @@ export default function LoginPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-2xl md:text-3xl font-display text-gradient">Welcome Back</CardTitle>
               <p className="text-muted-foreground text-sm mt-1">Sign in to continue your journey</p>
+              {trial && (
+                <div className="mt-3 rounded-lg border-2 border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 flex items-center gap-2 animate-fade-in">
+                  <KeyRound className="w-3.5 h-3.5" /> <span><strong>Trial access detected.</strong> Sign in with any password — your account is auto-created and your report is unlocked.</span>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">

@@ -26,7 +26,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
-  const { register, getCompanies, getInstitutions, getInstitutionUsage } = useAuth();
+  const { register, getCompanies, getInstitutions, getInstitutionUsage, getCompanyUsage, findCompanyByCode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +40,18 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     if ((role === "employee" || role === "company") && !companyCode) {
-      setError("Please select your company."); return;
+      setError("Please enter your company code."); return;
+    }
+    if (role === "employee" && companyCode) {
+      const c = findCompanyByCode(companyCode);
+      if (!c) { setError("Invalid company code. Please confirm with your HR."); return; }
+      const cu = getCompanyUsage(c.code);
+      if (cu.purchased > 0 && cu.remaining <= 0) {
+        setError("Your company's seat plan is full. Please ask HR to top up seats."); return;
+      }
+    }
+    if (role === "company" && companyCode && !findCompanyByCode(companyCode)) {
+      setError("Invalid company code. Please contact the platform admin."); return;
     }
     if (role === "institution" && !institutionCode) {
       setError("Please select your institution."); return;
@@ -162,13 +173,18 @@ export default function RegisterPage() {
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Building2 className="w-4 h-4 text-primary" /> Company Details</div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Company Code <span className="text-destructive">*</span></Label>
-                  <Select value={companyCode} onValueChange={setCompanyCode}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select your company" /></SelectTrigger>
-                    <SelectContent>
-                      {companies.map(c => (<SelectItem key={c.id} value={c.code}><span className="font-medium">{c.name}</span> <span className="text-muted-foreground ml-2">({c.code})</span></SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Ask your HR for the company code</p>
+                  <Input
+                    value={companyCode}
+                    onChange={e => setCompanyCode(e.target.value.toUpperCase().trim())}
+                    placeholder="e.g., TECH001"
+                    className="h-11 font-mono uppercase tracking-wider"
+                  />
+                  {companyCode && (
+                    companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())
+                      ? <p className="text-xs text-emerald-600 font-medium">✓ {companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())!.name}</p>
+                      : <p className="text-xs text-destructive">Code not recognised — ask your HR for the exact code.</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Your HR will share a private code. We never list other companies here for privacy.</p>
                 </div>
                 <div className="space-y-1.5"><Label className="text-xs font-semibold">Department</Label><Input value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g., Engineering" className="h-11" /></div>
               </div>
@@ -178,13 +194,18 @@ export default function RegisterPage() {
               <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="w-4 h-4 text-primary" /> Company Portal Access</div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Company <span className="text-destructive">*</span></Label>
-                  <Select value={companyCode} onValueChange={setCompanyCode}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select your company" /></SelectTrigger>
-                    <SelectContent>
-                      {companies.map(c => (<SelectItem key={c.id} value={c.code}><span className="font-medium">{c.name}</span> <span className="text-muted-foreground ml-2">({c.code})</span></SelectItem>))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-xs font-semibold">Company Code <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={companyCode}
+                    onChange={e => setCompanyCode(e.target.value.toUpperCase().trim())}
+                    placeholder="e.g., TECH001"
+                    className="h-11 font-mono uppercase tracking-wider"
+                  />
+                  {companyCode && (
+                    companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())
+                      ? <p className="text-xs text-emerald-600 font-medium">✓ {companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())!.name}</p>
+                      : <p className="text-xs text-destructive">Code not recognised — contact the platform admin.</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Designation</Label>

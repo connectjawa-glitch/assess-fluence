@@ -31,9 +31,9 @@ function generateResponses(profile: Record<string, number>): Responses {
 }
 
 const defaultCompanies: Omit<Company, "id">[] = [
-  { name: "TechCorp Solutions", code: "TECH001", industry: "Technology", location: "New York" },
-  { name: "Global Finance Ltd", code: "GFL002", industry: "Finance", location: "London" },
-  { name: "HealthFirst Inc", code: "HF003", industry: "Healthcare", location: "San Francisco" },
+  { name: "TechCorp Solutions", code: "TECH001", industry: "Technology", location: "New York", seatsPurchased: 50, pricePerSeat: 800, active: true },
+  { name: "Global Finance Ltd", code: "GFL002", industry: "Finance", location: "London", seatsPurchased: 75, pricePerSeat: 750, active: true },
+  { name: "HealthFirst Inc", code: "HF003", industry: "Healthcare", location: "San Francisco", seatsPurchased: 30, pricePerSeat: 850, active: true },
 ];
 
 const defaultInstitutions: Omit<Institution, "id" | "createdAt" | "active">[] = [
@@ -57,10 +57,10 @@ const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }
 ];
 
 export function initializeDummyData() {
-  if (localStorage.getItem("mm_dummy_v5")) return;
+  if (localStorage.getItem("mm_dummy_v6")) return;
 
   // Clear old version flags
-  ["mm_dummy_initialized", "mm_dummy_v2", "mm_dummy_v3", "mm_dummy_v4"].forEach(k => localStorage.removeItem(k));
+  ["mm_dummy_initialized", "mm_dummy_v2", "mm_dummy_v3", "mm_dummy_v4", "mm_dummy_v5"].forEach(k => localStorage.removeItem(k));
 
   // Companies
   const companies: Company[] = defaultCompanies.map(c => ({ ...c, id: crypto.randomUUID() }));
@@ -114,5 +114,5 @@ export function initializeDummyData() {
   const seededEmails = new Set(users.map(u => u.email));
   const nonDummy = existing.filter(e => !seededEmails.has(e.email));
   localStorage.setItem("mm_users", JSON.stringify([...nonDummy, ...users]));
-  localStorage.setItem("mm_dummy_v5", "true");
+  localStorage.setItem("mm_dummy_v6", "true");
 }
