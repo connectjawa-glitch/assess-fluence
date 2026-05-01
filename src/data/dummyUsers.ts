@@ -57,10 +57,10 @@ const dummyProfiles: { user: Omit<User, "id">; profile: Record<string, number> }
 ];
 
 export function initializeDummyData() {
-  if (localStorage.getItem("mm_dummy_v5")) return;
+  if (localStorage.getItem("mm_dummy_v6")) return;
 
   // Clear old version flags
-  ["mm_dummy_initialized", "mm_dummy_v2", "mm_dummy_v3", "mm_dummy_v4"].forEach(k => localStorage.removeItem(k));
+  ["mm_dummy_initialized", "mm_dummy_v2", "mm_dummy_v3", "mm_dummy_v4", "mm_dummy_v5"].forEach(k => localStorage.removeItem(k));
 
   // Companies
   const companies: Company[] = defaultCompanies.map(c => ({ ...c, id: crypto.randomUUID() }));
