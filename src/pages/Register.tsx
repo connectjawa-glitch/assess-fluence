@@ -26,7 +26,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
-  const { register, getCompanies, getInstitutions, getInstitutionUsage } = useAuth();
+  const { register, getCompanies, getInstitutions, getInstitutionUsage, getCompanyUsage, findCompanyByCode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
