@@ -31,9 +31,9 @@ function generateResponses(profile: Record<string, number>): Responses {
 }
 
 const defaultCompanies: Omit<Company, "id">[] = [
-  { name: "TechCorp Solutions", code: "TECH001", industry: "Technology", location: "New York" },
-  { name: "Global Finance Ltd", code: "GFL002", industry: "Finance", location: "London" },
-  { name: "HealthFirst Inc", code: "HF003", industry: "Healthcare", location: "San Francisco" },
+  { name: "TechCorp Solutions", code: "TECH001", industry: "Technology", location: "New York", seatsPurchased: 50, pricePerSeat: 800, active: true },
+  { name: "Global Finance Ltd", code: "GFL002", industry: "Finance", location: "London", seatsPurchased: 75, pricePerSeat: 750, active: true },
+  { name: "HealthFirst Inc", code: "HF003", industry: "Healthcare", location: "San Francisco", seatsPurchased: 30, pricePerSeat: 850, active: true },
 ];
 
 const defaultInstitutions: Omit<Institution, "id" | "createdAt" | "active">[] = [
