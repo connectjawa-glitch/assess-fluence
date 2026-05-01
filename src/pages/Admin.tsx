@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, AreaChart, Area
 } from "recharts";
-import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard } from "lucide-react";
+import { Building2, Download, Eye, LogOut, Plus, Search, Trash2, Users, TrendingUp, BarChart3, School, ShieldCheck, ShieldAlert, CreditCard, Copy, KeyRound, Clock } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import MusicAdmin from "@/components/MusicAdmin";
 import jsPDF from "jspdf";
