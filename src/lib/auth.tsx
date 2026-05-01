@@ -61,14 +61,22 @@ interface AuthContextType {
   logout: () => void;
   // Companies
   getCompanies: () => Company[];
-  addCompany: (company: Omit<Company, "id">) => void;
+  addCompany: (company: Omit<Company, "id">) => Company;
+  updateCompany: (id: string, patch: Partial<Company>) => void;
   deleteCompany: (id: string) => void;
+  addCompanySeats: (id: string, seats: number, pricePerSeat?: number) => void;
+  getCompanyUsage: (code: string) => { used: number; purchased: number; remaining: number };
+  findCompanyByCode: (code: string) => Company | undefined;
   // Institutions
   getInstitutions: () => Institution[];
   addInstitution: (i: Omit<Institution, "id" | "createdAt" | "active"> & { active?: boolean }) => Institution;
   updateInstitution: (id: string, patch: Partial<Institution>) => void;
   deleteInstitution: (id: string) => void;
   addInstitutionSeats: (id: string, seats: number, pricePerSeat?: number) => void;
+  // Trial access
+  getTrialAccesses: () => TrialAccess[];
+  createTrialAccess: (data: Omit<TrialAccess, "id" | "createdAt" | "expiresAt"> & { days: number }) => TrialAccess;
+  revokeTrialAccess: (id: string) => void;
   // Helpers
   getInstitutionUsage: (code: string) => { used: number; purchased: number; remaining: number };
 }
