@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan } from "@/lib/auth";
+import { useAuth, type User, type Company, type Institution, type InstitutionType, type InstitutionPlan, type TrialAccess } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
