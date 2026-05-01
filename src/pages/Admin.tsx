@@ -924,6 +924,121 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
+          {/* TRIAL ACCESS TAB */}
+          <TabsContent value="trial" className="space-y-4">
+            <div>
+              <h3 className="text-lg font-display font-semibold">Temporary Trial Access</h3>
+              <p className="text-xs text-muted-foreground">
+                Generate a no-payment login link for any email. Auto-expires after the chosen number of days.
+                Reports auto-unlock for trial users.
+              </p>
+            </div>
+
+            <Card className="shadow-card">
+              <CardContent className="p-5 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Email <span className="text-destructive">*</span></Label>
+                    <Input type="email" value={trialEmail} onChange={e => setTrialEmail(e.target.value)} placeholder="reviewer@example.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Display Name</Label>
+                    <Input value={trialName} onChange={e => setTrialName(e.target.value)} placeholder="Optional" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Valid for (days) <span className="text-destructive">*</span></Label>
+                    <Input type="number" min={1} max={365} value={trialDays} onChange={e => setTrialDays(parseInt(e.target.value || "1"))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Role</Label>
+                    <Select value={trialRole} onValueChange={(v) => setTrialRole(v as "student" | "employee")}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Note (internal)</Label>
+                  <Input value={trialNote} onChange={e => setTrialNote(e.target.value)} placeholder="e.g., Demo for ABC School principal" />
+                </div>
+                <Button onClick={handleCreateTrial} className="w-full gradient-primary text-primary-foreground" disabled={!trialEmail || trialDays < 1}>
+                  <KeyRound className="w-4 h-4 mr-1.5" /> Generate Trial Link
+                </Button>
+
+                {lastTrialLink && (
+                  <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50 p-3 space-y-2 animate-fade-in">
+                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">✓ Link generated — share this</p>
+                    <div className="flex gap-2">
+                      <Input readOnly value={lastTrialLink} className="text-xs font-mono bg-background" />
+                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(lastTrialLink)}>
+                        <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-emerald-700">
+                      The user logs in with this email (any password). The account is auto-created on first login and the report is unlocked without payment.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-display">Active Trial Accesses ({trials.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {trials.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-6">No trial links yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Email</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Role</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Days</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Expires</th>
+                          <th className="text-left py-2 px-2 font-medium text-muted-foreground text-xs">Status</th>
+                          <th className="text-right py-2 px-2 font-medium text-muted-foreground text-xs">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {trials.map(t => {
+                          const expired = new Date(t.expiresAt).getTime() < Date.now();
+                          const link = `${window.location.origin}/login?email=${encodeURIComponent(t.email)}&trial=1`;
+                          return (
+                            <tr key={t.id} className="border-b hover:bg-muted/40">
+                              <td className="py-2 px-2 font-medium">{t.email}{t.name && <span className="text-xs text-muted-foreground ml-1">({t.name})</span>}</td>
+                              <td className="py-2 px-2 capitalize text-xs">{t.role}</td>
+                              <td className="py-2 px-2 text-xs">{t.days}d</td>
+                              <td className="py-2 px-2 text-xs"><Clock className="inline w-3 h-3 mr-1" />{new Date(t.expiresAt).toLocaleDateString()} {new Date(t.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                              <td className="py-2 px-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${expired ? "bg-destructive/10 text-destructive" : "bg-emerald-100 text-emerald-700"}`}>
+                                  {expired ? "Expired" : "Active"}
+                                </span>
+                              </td>
+                              <td className="py-2 px-2 text-right">
+                                <Button variant="ghost" size="sm" onClick={() => copyToClipboard(link)}>
+                                  <Copy className="w-3.5 h-3.5 mr-1" /> Copy Link
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleRevokeTrial(t.id)}>
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* MUSIC TAB */}
           <TabsContent value="music" className="space-y-4">
             <MusicAdmin />
