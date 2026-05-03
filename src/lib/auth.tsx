@@ -93,6 +93,11 @@ export interface RegisterData {
   school?: string;
   designation?: string;
   grade?: string;
+  // Self-serve org creation (for company/institution reps without a pre-issued code)
+  newOrgName?: string;
+  newOrgIndustry?: string;
+  newOrgLocation?: string;
+  newInstType?: InstitutionType;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
