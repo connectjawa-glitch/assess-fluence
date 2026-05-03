@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User } from "@/lib/auth";
+import { useAuth, type User, type Company } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
+} from "@/components/ui/dialog";
+import {
   PieChart, Pie, Cell, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar,
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend
 } from "recharts";
 import {
   Building2, Download, Eye, LogOut, Search, Users, TrendingUp,
-  CheckCircle2, Clock, FileSpreadsheet, FileText
+  CheckCircle2, Clock, FileSpreadsheet, FileText, ShoppingCart, CreditCard, Sparkles,
 } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import { generateDeepReport } from "@/lib/pdfReport";
@@ -21,6 +24,13 @@ import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
 
+const SEAT_PACKS = [
+  { seats: 25, pricePerSeat: 900, label: "Starter" },
+  { seats: 50, pricePerSeat: 800, label: "Standard" },
+  { seats: 100, pricePerSeat: 700, label: "Pro" },
+  { seats: 250, pricePerSeat: 600, label: "Enterprise" },
+];
+
 interface EmpRow {
   user: User;
   completed: boolean;
@@ -28,12 +38,16 @@ interface EmpRow {
 }
 
 export default function CompanyPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, getCompanies, addCompanySeats, getCompanyUsage } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<EmpRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending">("all");
   const [selected, setSelected] = useState<User | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [packIdx, setPackIdx] = useState(1);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -46,6 +60,8 @@ export default function CompanyPage() {
 
   const refresh = () => {
     if (!user?.companyCode) return;
+    const c = getCompanies().find(c => c.code === user.companyCode) || null;
+    setCompany(c);
     const all: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
     const employees = all.filter(u => u.role === "employee" && u.companyCode === user.companyCode);
     const built: EmpRow[] = employees.map(u => {
@@ -58,6 +74,23 @@ export default function CompanyPage() {
       return { user: u, completed, results };
     });
     setRows(built);
+  };
+
+  const usage = useMemo(() => {
+    if (!user?.companyCode) return { used: 0, purchased: 0, remaining: 0 };
+    return getCompanyUsage(user.companyCode);
+  }, [user, company, rows, getCompanyUsage]);
+
+  const handleBuySeats = () => {
+    if (!company) return;
+    setPaying(true);
+    const pack = SEAT_PACKS[packIdx];
+    setTimeout(() => {
+      addCompanySeats(company.id, pack.seats, pack.pricePerSeat);
+      setPaying(false);
+      setBuyOpen(false);
+      refresh();
+    }, 600);
   };
 
   const stats = useMemo(() => {
@@ -215,6 +248,98 @@ export default function CompanyPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+        {/* Seat License Hero */}
+        {company && (() => {
+          const seatPct = usage.purchased ? Math.round((usage.used / usage.purchased) * 100) : 0;
+          const pack = SEAT_PACKS[packIdx];
+          const totalDue = pack.seats * pack.pricePerSeat;
+          return (
+            <Card className="shadow-elevated border-2 border-primary/20 overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                        Seat License — {company.industry || "Company"}
+                      </p>
+                      {company.active === false && <Badge variant="destructive">Suspended</Badge>}
+                      {(company.seatsPurchased || 0) === 0 && <Badge variant="outline" className="text-amber-600 border-amber-500/40">No Seats Yet</Badge>}
+                    </div>
+                    <p className="text-3xl font-display font-bold text-primary tabular-nums">
+                      {usage.used} <span className="text-muted-foreground text-xl">/ {usage.purchased}</span>
+                      <span className="ml-3 text-base font-medium text-muted-foreground">seats used</span>
+                    </p>
+                    <div className="mt-2 h-2.5 rounded-full bg-muted overflow-hidden max-w-md">
+                      <div
+                        className={`h-full rounded-full transition-all ${seatPct > 90 ? "bg-destructive" : "bg-gradient-to-r from-primary to-secondary"}`}
+                        style={{ width: `${Math.min(100, seatPct)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {usage.remaining} seats remaining • Last price: ₹{company.pricePerSeat || 0}/seat • Code: <span className="font-mono font-bold text-primary">{company.code}</span>
+                    </p>
+                  </div>
+                  <Dialog open={buyOpen} onOpenChange={setBuyOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="lg" className="gradient-primary text-primary-foreground gap-2 shrink-0">
+                        <ShoppingCart className="w-4 h-4" /> Buy More Seats
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl font-display flex items-center gap-2">
+                          <CreditCard className="w-5 h-5 text-primary" /> Purchase Seats
+                        </DialogTitle>
+                        <DialogDescription>
+                          Pick a pack to top up your seat license. Volume discounts apply automatically.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-2">
+                        {SEAT_PACKS.map((p, i) => {
+                          const checked = packIdx === i;
+                          const total = p.seats * p.pricePerSeat;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setPackIdx(i)}
+                              className={`w-full text-left rounded-xl border-2 p-4 transition-all ${checked ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40"}`}
+                            >
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div>
+                                  <p className="font-display font-semibold text-sm">{p.label} — {p.seats} seats</p>
+                                  <p className="text-xs text-muted-foreground">₹{p.pricePerSeat}/seat</p>
+                                </div>
+                                <p className="font-bold text-primary tabular-nums">₹{total.toLocaleString("en-IN")}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/30 mt-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-wider text-muted-foreground">Total Due</p>
+                            <p className="text-2xl font-display font-bold text-primary tabular-nums">₹{totalDue.toLocaleString("en-IN")}</p>
+                          </div>
+                          <Button onClick={handleBuySeats} disabled={paying} className="gradient-primary text-primary-foreground">
+                            {paying ? "Processing…" : "Pay & Add Seats"}
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground italic text-center pt-1">
+                          Secure mock checkout • Seats are credited instantly. Employees auto-unlock reports.
+                        </p>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <div className="mt-3 p-3 rounded-lg bg-muted/40 border text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">Invite employees:</span> share your company code <span className="font-mono font-bold text-primary">{company.code}</span> — each registration consumes one seat and auto-unlocks their report.
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {[

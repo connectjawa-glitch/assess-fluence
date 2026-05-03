@@ -26,6 +26,12 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  // Self-serve org creation
+  const [orgMode, setOrgMode] = useState<"join" | "create">("create");
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgIndustry, setNewOrgIndustry] = useState("");
+  const [newOrgLocation, setNewOrgLocation] = useState("");
+  const [newInstType, setNewInstType] = useState<"School" | "College" | "Coaching" | "Training" | "NGO" | "Other">("School");
   const { register, getCompanies, getInstitutions, getInstitutionUsage, getCompanyUsage, findCompanyByCode } = useAuth();
   const navigate = useNavigate();
 
@@ -39,10 +45,19 @@ export default function RegisterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if ((role === "employee" || role === "company") && !companyCode) {
-      setError("Please enter your company code."); return;
+
+    // Company rep
+    if (role === "company") {
+      if (orgMode === "join") {
+        if (!companyCode) { setError("Please enter your company code."); return; }
+        if (!findCompanyByCode(companyCode)) { setError("Invalid company code. Please contact the platform admin."); return; }
+      } else {
+        if (!newOrgName.trim()) { setError("Please enter your company name to register a new account."); return; }
+      }
     }
-    if (role === "employee" && companyCode) {
+    // Employee always joins
+    if (role === "employee") {
+      if (!companyCode) { setError("Please enter your company code."); return; }
       const c = findCompanyByCode(companyCode);
       if (!c) { setError("Invalid company code. Please confirm with your HR."); return; }
       const cu = getCompanyUsage(c.code);
@@ -50,11 +65,13 @@ export default function RegisterPage() {
         setError("Your company's seat plan is full. Please ask HR to top up seats."); return;
       }
     }
-    if (role === "company" && companyCode && !findCompanyByCode(companyCode)) {
-      setError("Invalid company code. Please contact the platform admin."); return;
-    }
-    if (role === "institution" && !institutionCode) {
-      setError("Please select your institution."); return;
+    // Institution rep
+    if (role === "institution") {
+      if (orgMode === "join") {
+        if (!institutionCode) { setError("Please select your institution."); return; }
+      } else {
+        if (!newOrgName.trim()) { setError("Please enter your institution name to register."); return; }
+      }
     }
     if (role === "student" && !school && !institutionCode) {
       setError("Please enter your school/college name or select an institution."); return;
@@ -65,12 +82,16 @@ export default function RegisterPage() {
 
     const success = register({
       name, email, password, role, phone,
-      companyCode: (role === "employee" || role === "company") ? companyCode : undefined,
-      institutionCode: (role === "institution" || (role === "student" && institutionCode)) ? institutionCode : undefined,
+      companyCode: role === "employee" ? companyCode : (role === "company" && orgMode === "join") ? companyCode : undefined,
+      institutionCode: (role === "institution" && orgMode === "join") ? institutionCode : (role === "student" && institutionCode) ? institutionCode : undefined,
       department: role === "employee" ? department : undefined,
       school: role === "student" ? school : undefined,
       grade: role === "student" ? grade : undefined,
       designation: (role === "company" || role === "institution") ? designation : undefined,
+      newOrgName: ((role === "company" || role === "institution") && orgMode === "create") ? newOrgName.trim() : undefined,
+      newOrgIndustry: (role === "company" && orgMode === "create") ? newOrgIndustry : undefined,
+      newOrgLocation: ((role === "company" || role === "institution") && orgMode === "create") ? newOrgLocation : undefined,
+      newInstType: (role === "institution" && orgMode === "create") ? newInstType : undefined,
     });
 
     if (success) {
@@ -193,41 +214,107 @@ export default function RegisterPage() {
             {role === "company" && (
               <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><ShieldCheck className="w-4 h-4 text-primary" /> Company Portal Access</div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Company Code <span className="text-destructive">*</span></Label>
-                  <Input
-                    value={companyCode}
-                    onChange={e => setCompanyCode(e.target.value.toUpperCase().trim())}
-                    placeholder="e.g., TECH001"
-                    className="h-11 font-mono uppercase tracking-wider"
-                  />
-                  {companyCode && (
-                    companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())
-                      ? <p className="text-xs text-emerald-600 font-medium">✓ {companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())!.name}</p>
-                      : <p className="text-xs text-destructive">Code not recognised — contact the platform admin.</p>
-                  )}
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setOrgMode("create")} className={`p-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${orgMode === "create" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>
+                    🚀 Register New Company
+                  </button>
+                  <button type="button" onClick={() => setOrgMode("join")} className={`p-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${orgMode === "join" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>
+                    🔑 Join with Existing Code
+                  </button>
                 </div>
+
+                {orgMode === "create" ? (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Company Name <span className="text-destructive">*</span></Label>
+                      <Input value={newOrgName} onChange={e => setNewOrgName(e.target.value)} placeholder="e.g., Acme Innovations Pvt Ltd" className="h-11" />
+                      <p className="text-[11px] text-muted-foreground">A unique company code will be generated automatically. You can buy seats from your portal after signup.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Industry</Label>
+                        <Input value={newOrgIndustry} onChange={e => setNewOrgIndustry(e.target.value)} placeholder="e.g., Technology" className="h-11" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Location</Label>
+                        <Input value={newOrgLocation} onChange={e => setNewOrgLocation(e.target.value)} placeholder="e.g., Bengaluru" className="h-11" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Company Code <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={companyCode}
+                      onChange={e => setCompanyCode(e.target.value.toUpperCase().trim())}
+                      placeholder="e.g., TECH001"
+                      className="h-11 font-mono uppercase tracking-wider"
+                    />
+                    {companyCode && (
+                      companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())
+                        ? <p className="text-xs text-emerald-600 font-medium">✓ {companies.find(c => c.code.toUpperCase() === companyCode.toUpperCase())!.name}</p>
+                        : <p className="text-xs text-destructive">Code not recognised — contact the platform admin.</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Designation</Label>
                   <Input value={designation} onChange={e => setDesignation(e.target.value)} placeholder="e.g., HR Manager" className="h-11" />
                 </div>
-                <p className="text-xs text-muted-foreground">View &amp; download reports for all employees in your company.</p>
+                <p className="text-xs text-muted-foreground">View &amp; download reports, manage seats &amp; bulk-pay for all employees.</p>
               </div>
             )}
 
             {role === "institution" && (
               <div className="space-y-3 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><School className="w-4 h-4 text-primary" /> Institution Portal Access</div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Institution <span className="text-destructive">*</span></Label>
-                  <Select value={institutionCode} onValueChange={setInstitutionCode}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select your institution" /></SelectTrigger>
-                    <SelectContent>
-                      {institutions.map(i => (<SelectItem key={i.id} value={i.code}><span className="font-medium">{i.name}</span> <span className="text-muted-foreground ml-2">({i.code} • {i.type})</span></SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Don't see your institution? Ask the platform admin to add it.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setOrgMode("create")} className={`p-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${orgMode === "create" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>
+                    🚀 Register New Institution
+                  </button>
+                  <button type="button" onClick={() => setOrgMode("join")} className={`p-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${orgMode === "join" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>
+                    🔑 Join Existing
+                  </button>
                 </div>
+
+                {orgMode === "create" ? (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Institution Name <span className="text-destructive">*</span></Label>
+                      <Input value={newOrgName} onChange={e => setNewOrgName(e.target.value)} placeholder="e.g., Greenwood Public School" className="h-11" />
+                      <p className="text-[11px] text-muted-foreground">A unique institution code is generated automatically. Buy seats from your portal after signup.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Type</Label>
+                        <Select value={newInstType} onValueChange={(v) => setNewInstType(v as any)}>
+                          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(["School", "College", "Coaching", "Training", "NGO", "Other"] as const).map(t => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Location</Label>
+                        <Input value={newOrgLocation} onChange={e => setNewOrgLocation(e.target.value)} placeholder="e.g., Mumbai" className="h-11" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Institution <span className="text-destructive">*</span></Label>
+                    <Select value={institutionCode} onValueChange={setInstitutionCode}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="Select your institution" /></SelectTrigger>
+                      <SelectContent>
+                        {institutions.map(i => (<SelectItem key={i.id} value={i.code}><span className="font-medium">{i.name}</span> <span className="text-muted-foreground ml-2">({i.code} • {i.type})</span></SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Designation</Label>
                   <Input value={designation} onChange={e => setDesignation(e.target.value)} placeholder="e.g., Principal, Dean, Coordinator" className="h-11" />
