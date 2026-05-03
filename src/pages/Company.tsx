@@ -38,12 +38,16 @@ interface EmpRow {
 }
 
 export default function CompanyPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, getCompanies, addCompanySeats, getCompanyUsage } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<EmpRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending">("all");
   const [selected, setSelected] = useState<User | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [packIdx, setPackIdx] = useState(1);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -56,6 +60,8 @@ export default function CompanyPage() {
 
   const refresh = () => {
     if (!user?.companyCode) return;
+    const c = getCompanies().find(c => c.code === user.companyCode) || null;
+    setCompany(c);
     const all: User[] = JSON.parse(localStorage.getItem("mm_users") || "[]");
     const employees = all.filter(u => u.role === "employee" && u.companyCode === user.companyCode);
     const built: EmpRow[] = employees.map(u => {
@@ -68,6 +74,23 @@ export default function CompanyPage() {
       return { user: u, completed, results };
     });
     setRows(built);
+  };
+
+  const usage = useMemo(() => {
+    if (!user?.companyCode) return { used: 0, purchased: 0, remaining: 0 };
+    return getCompanyUsage(user.companyCode);
+  }, [user, company, rows, getCompanyUsage]);
+
+  const handleBuySeats = () => {
+    if (!company) return;
+    setPaying(true);
+    const pack = SEAT_PACKS[packIdx];
+    setTimeout(() => {
+      addCompanySeats(company.id, pack.seats, pack.pricePerSeat);
+      setPaying(false);
+      setBuyOpen(false);
+      refresh();
+    }, 600);
   };
 
   const stats = useMemo(() => {
