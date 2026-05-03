@@ -348,9 +348,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
       role: data.role,
       phone: data.phone,
-      companyCode: data.companyCode,
+      companyCode: resolvedCompanyCode,
       companyName,
-      institutionCode: data.institutionCode,
+      institutionCode: resolvedInstitutionCode,
       institutionName,
       department: data.department,
       school: data.school || institutionName,
@@ -361,9 +361,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("mm_users", JSON.stringify(users));
 
     // BULK PAID AUTO-UNLOCK: members of a paid company / institution don't pay again.
-    const companyForUser = data.companyCode ? findCompanyByCode(data.companyCode) : undefined;
+    const companyForUser = resolvedCompanyCode ? findCompanyByCode(resolvedCompanyCode) : undefined;
     const isCompanyPaid = !!(companyForUser && (companyForUser.seatsPurchased || 0) > 0);
-    const instForUser = data.institutionCode ? getInstitutions().find(i => i.code === data.institutionCode) : undefined;
+    const instForUser = resolvedInstitutionCode ? getInstitutions().find(i => i.code === resolvedInstitutionCode) : undefined;
     const isInstPaid = !!(instForUser && instForUser.seatsPurchased > 0);
     if (isCompanyPaid || isInstPaid) {
       localStorage.setItem(`pia_unlocked_${newUser.id}`, "1");
