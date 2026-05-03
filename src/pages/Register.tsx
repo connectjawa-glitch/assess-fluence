@@ -26,6 +26,12 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  // Self-serve org creation
+  const [orgMode, setOrgMode] = useState<"join" | "create">("create");
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgIndustry, setNewOrgIndustry] = useState("");
+  const [newOrgLocation, setNewOrgLocation] = useState("");
+  const [newInstType, setNewInstType] = useState<"School" | "College" | "Coaching" | "Training" | "NGO" | "Other">("School");
   const { register, getCompanies, getInstitutions, getInstitutionUsage, getCompanyUsage, findCompanyByCode } = useAuth();
   const navigate = useNavigate();
 
@@ -39,10 +45,19 @@ export default function RegisterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if ((role === "employee" || role === "company") && !companyCode) {
-      setError("Please enter your company code."); return;
+
+    // Company rep
+    if (role === "company") {
+      if (orgMode === "join") {
+        if (!companyCode) { setError("Please enter your company code."); return; }
+        if (!findCompanyByCode(companyCode)) { setError("Invalid company code. Please contact the platform admin."); return; }
+      } else {
+        if (!newOrgName.trim()) { setError("Please enter your company name to register a new account."); return; }
+      }
     }
-    if (role === "employee" && companyCode) {
+    // Employee always joins
+    if (role === "employee") {
+      if (!companyCode) { setError("Please enter your company code."); return; }
       const c = findCompanyByCode(companyCode);
       if (!c) { setError("Invalid company code. Please confirm with your HR."); return; }
       const cu = getCompanyUsage(c.code);
@@ -50,11 +65,13 @@ export default function RegisterPage() {
         setError("Your company's seat plan is full. Please ask HR to top up seats."); return;
       }
     }
-    if (role === "company" && companyCode && !findCompanyByCode(companyCode)) {
-      setError("Invalid company code. Please contact the platform admin."); return;
-    }
-    if (role === "institution" && !institutionCode) {
-      setError("Please select your institution."); return;
+    // Institution rep
+    if (role === "institution") {
+      if (orgMode === "join") {
+        if (!institutionCode) { setError("Please select your institution."); return; }
+      } else {
+        if (!newOrgName.trim()) { setError("Please enter your institution name to register."); return; }
+      }
     }
     if (role === "student" && !school && !institutionCode) {
       setError("Please enter your school/college name or select an institution."); return;
@@ -65,12 +82,16 @@ export default function RegisterPage() {
 
     const success = register({
       name, email, password, role, phone,
-      companyCode: (role === "employee" || role === "company") ? companyCode : undefined,
-      institutionCode: (role === "institution" || (role === "student" && institutionCode)) ? institutionCode : undefined,
+      companyCode: role === "employee" ? companyCode : (role === "company" && orgMode === "join") ? companyCode : undefined,
+      institutionCode: (role === "institution" && orgMode === "join") ? institutionCode : (role === "student" && institutionCode) ? institutionCode : undefined,
       department: role === "employee" ? department : undefined,
       school: role === "student" ? school : undefined,
       grade: role === "student" ? grade : undefined,
       designation: (role === "company" || role === "institution") ? designation : undefined,
+      newOrgName: ((role === "company" || role === "institution") && orgMode === "create") ? newOrgName.trim() : undefined,
+      newOrgIndustry: (role === "company" && orgMode === "create") ? newOrgIndustry : undefined,
+      newOrgLocation: ((role === "company" || role === "institution") && orgMode === "create") ? newOrgLocation : undefined,
+      newInstType: (role === "institution" && orgMode === "create") ? newInstType : undefined,
     });
 
     if (success) {
