@@ -280,7 +280,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (users.find(u => u.email === data.email)) return false;
 
     let companyName: string | undefined;
-    if ((data.role === "employee" || data.role === "company") && data.companyCode) {
+    let resolvedCompanyCode = data.companyCode;
+
+    // Self-serve company creation: rep provided a custom company name (no code) -> create org
+    if (data.role === "company" && !data.companyCode && data.newOrgName) {
+      const slug = data.newOrgName.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6) || "ORG";
+      let code = `${slug}${Math.floor(100 + Math.random() * 900)}`;
+      while (findCompanyByCode(code)) code = `${slug}${Math.floor(100 + Math.random() * 900)}`;
+      const created = addCompany({
+        name: data.newOrgName,
+        code,
+        industry: data.newOrgIndustry || "—",
+        location: data.newOrgLocation || "—",
+        seatsPurchased: 0,
+        pricePerSeat: 0,
+        active: true,
+      });
+      resolvedCompanyCode = created.code;
+      companyName = created.name;
+    } else if ((data.role === "employee" || data.role === "company") && data.companyCode) {
       const company = findCompanyByCode(data.companyCode);
       if (!company) return false;
       if (company.active === false) return false;
@@ -293,7 +311,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let institutionName: string | undefined;
-    if (data.institutionCode || data.role === "institution") {
+    let resolvedInstitutionCode = data.institutionCode;
+
+    // Self-serve institution creation
+    if (data.role === "institution" && !data.institutionCode && data.newOrgName) {
+      const slug = data.newOrgName.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6) || "INST";
+      let code = `${slug}${Math.floor(100 + Math.random() * 900)}`;
+      while (getInstitutions().find(i => i.code === code)) code = `${slug}${Math.floor(100 + Math.random() * 900)}`;
+      const created = addInstitution({
+        name: data.newOrgName,
+        code,
+        type: data.newInstType || "School",
+        location: data.newOrgLocation || "—",
+        plan: "Starter",
+        seatsPurchased: 0,
+        pricePerSeat: 0,
+        active: true,
+      });
+      resolvedInstitutionCode = created.code;
+      institutionName = created.name;
+    } else if (data.institutionCode || data.role === "institution") {
       if (!data.institutionCode) return false;
       const inst = getInstitutions().find(i => i.code === data.institutionCode);
       if (!inst) return false;
