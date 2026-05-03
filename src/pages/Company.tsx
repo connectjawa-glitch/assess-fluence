@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, type User } from "@/lib/auth";
+import { useAuth, type User, type Company } from "@/lib/auth";
 import { calculateAllResults, type AssessmentResults, type Responses } from "@/lib/scoring";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
+} from "@/components/ui/dialog";
+import {
   PieChart, Pie, Cell, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar,
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend
 } from "recharts";
 import {
   Building2, Download, Eye, LogOut, Search, Users, TrendingUp,
-  CheckCircle2, Clock, FileSpreadsheet, FileText
+  CheckCircle2, Clock, FileSpreadsheet, FileText, ShoppingCart, CreditCard, Sparkles,
 } from "lucide-react";
 import UserReport from "@/components/UserReport";
 import { generateDeepReport } from "@/lib/pdfReport";
@@ -20,6 +23,13 @@ import jsPDF from "jspdf";
 import perfyLogo from "@/assets/perfy-logo.jpeg";
 
 const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#EC4899", "#6366F1"];
+
+const SEAT_PACKS = [
+  { seats: 25, pricePerSeat: 900, label: "Starter" },
+  { seats: 50, pricePerSeat: 800, label: "Standard" },
+  { seats: 100, pricePerSeat: 700, label: "Pro" },
+  { seats: 250, pricePerSeat: 600, label: "Enterprise" },
+];
 
 interface EmpRow {
   user: User;
