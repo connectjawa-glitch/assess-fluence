@@ -912,7 +912,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 2;
 
     y = subSubTitle(doc, "Career Growth Path", y);
-    y = para(doc, info.growthPath, MARGIN, y, CONTENT_W);
+    y = pathSteps(doc, info.growthPath, MARGIN, y, CONTENT_W);
     y += 4;
   });
 
