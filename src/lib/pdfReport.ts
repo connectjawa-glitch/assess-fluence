@@ -49,6 +49,10 @@ function clean(s: string): string {
   if (!s) return "";
   return s
     .replace(/\u00A0/g, " ")    // non-breaking space -> normal space
+    .replace(/[→➜➔]/g, " -> ")  // PDF-safe arrows so growth paths don't render as broken glyphs
+    .replace(/[–—]/g, " - ")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
     .replace(/\s+/g, " ")        // collapse all whitespace
     .trim();
 }
@@ -165,6 +169,21 @@ function bullets(doc: jsPDF, items: string[], x: number, y: number, maxW: number
     doc.text(lines, x, y);
     y += lines.length * 5.2 + 1.5;
   }
+  return y;
+}
+
+function pathSteps(doc: jsPDF, text: string, x: number, y: number, maxW: number): number {
+  const safeMaxW = Math.min(maxW, MARGIN + CONTENT_W - x);
+  const steps = clean(text).split(/\s*->\s*/).map(step => step.trim()).filter(Boolean);
+  if (steps.length <= 1) return para(doc, text, x, y, safeMaxW);
+
+  steps.forEach((step, index) => {
+    const prefix = `${index + 1}. `;
+    const lines = doc.splitTextToSize(`${prefix}${step}`, safeMaxW);
+    y = ensureSpace(doc, y, lines.length * 5.2 + 3);
+    doc.text(lines, x, y);
+    y += lines.length * 5.2 + 1.5;
+  });
   return y;
 }
 
@@ -330,7 +349,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.text(user.name.toUpperCase(), pw / 2, 125, { align: "center" });
   doc.setFontSize(11);
   doc.text(`Profile Type: ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`, pw / 2, 135, { align: "center" });
-  const extras = [user.companyName, user.department, (user as any).school].filter(Boolean);
+  const extras = [user.companyName, user.department, user.school].filter(Boolean);
   if (extras.length) doc.text(extras.join("  |  "), pw / 2, 143, { align: "center" });
 
   doc.setFontSize(10);
@@ -431,7 +450,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = boldLabel(doc, "Profile Type: ", user.role.charAt(0).toUpperCase() + user.role.slice(1), y);
   if (user.companyName) y = boldLabel(doc, "Company: ", user.companyName, y);
   if (user.department) y = boldLabel(doc, "Department: ", user.department, y);
-  if ((user as any).school) y = boldLabel(doc, "School/College: ", (user as any).school, y);
+  if (user.school) y = boldLabel(doc, "School/College: ", user.school, y);
   y += 3;
 
   y = sectionTitle(doc, "Assessment Results at a Glance", y);
@@ -893,7 +912,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
     y += 2;
 
     y = subSubTitle(doc, "Career Growth Path", y);
-    y = para(doc, info.growthPath, MARGIN, y, CONTENT_W);
+    y = pathSteps(doc, info.growthPath, MARGIN, y, CONTENT_W);
     y += 4;
   });
 
