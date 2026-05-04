@@ -349,7 +349,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   doc.text(user.name.toUpperCase(), pw / 2, 125, { align: "center" });
   doc.setFontSize(11);
   doc.text(`Profile Type: ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`, pw / 2, 135, { align: "center" });
-  const extras = [user.companyName, user.department, (user as any).school].filter(Boolean);
+  const extras = [user.companyName, user.department, user.school].filter(Boolean);
   if (extras.length) doc.text(extras.join("  |  "), pw / 2, 143, { align: "center" });
 
   doc.setFontSize(10);
@@ -450,7 +450,7 @@ export function generateDeepReport(user: User, results: AssessmentResults) {
   y = boldLabel(doc, "Profile Type: ", user.role.charAt(0).toUpperCase() + user.role.slice(1), y);
   if (user.companyName) y = boldLabel(doc, "Company: ", user.companyName, y);
   if (user.department) y = boldLabel(doc, "Department: ", user.department, y);
-  if ((user as any).school) y = boldLabel(doc, "School/College: ", (user as any).school, y);
+  if (user.school) y = boldLabel(doc, "School/College: ", user.school, y);
   y += 3;
 
   y = sectionTitle(doc, "Assessment Results at a Glance", y);
